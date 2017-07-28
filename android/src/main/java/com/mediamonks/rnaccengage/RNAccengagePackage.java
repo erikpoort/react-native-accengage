@@ -1,7 +1,5 @@
 package com.mediamonks.rnaccengage;
 
-import android.app.Application;
-
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.JavaScriptModule;
 import com.facebook.react.bridge.NativeModule;
