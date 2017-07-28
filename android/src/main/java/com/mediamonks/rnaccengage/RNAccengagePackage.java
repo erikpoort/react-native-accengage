@@ -21,6 +21,7 @@ public class RNAccengagePackage implements ReactPackage
 	public List<NativeModule> createNativeModules(ReactApplicationContext reactContext)
 	{
 		List<NativeModule> modules = new ArrayList<>();
+		modules.add(new RNAccengageModule(reactContext));
 		return modules;
 	}
 
