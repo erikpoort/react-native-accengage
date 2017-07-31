@@ -3,6 +3,7 @@ package com.mediamonks.rnaccengage;
 import android.util.Log;
 
 import com.ad4screen.sdk.A4S;
+import com.ad4screen.sdk.analytics.Lead;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
@@ -55,5 +56,20 @@ class RNAccengageModule extends ReactContextBaseJavaModule
 		JSONObject jsonObject = new JSONObject(hashMap);
 
 		A4S.get(getReactApplicationContext()).trackEvent(key, jsonObject.toString());
+	}
+
+	@ReactMethod
+	public void trackLead(String leadLabel, String leadValue) {
+		if (leadLabel == null || leadLabel.isEmpty()) {
+			Log.w(ACCENGAGE, "No label was supplied");
+			return;
+		}
+		if (leadValue == null || leadValue.isEmpty()) {
+			Log.w(ACCENGAGE, "No value was supplied");
+			return;
+		}
+
+		Lead lead = new Lead(leadLabel, leadValue);
+		A4S.get(getReactApplicationContext()).trackLead(lead);
 	}
 }

@@ -17,13 +17,13 @@ RCT_EXPORT_MODULE();
 #pragma mark - Tracking
 
 RCT_EXPORT_METHOD(
-    trackEvent:(NSInteger)key
+    trackEvent:(NSUInteger)key
 ) {
     [Accengage trackEvent:key];
 }
 
 RCT_EXPORT_METHOD(
-    trackEventWithCustomData:(NSInteger)key
+    trackEventWithCustomData:(NSUInteger)key
     customData:(NSDictionary *)customData
 ) {
     if (!customData) {
@@ -42,6 +42,22 @@ RCT_EXPORT_METHOD(
     
     NSString *jsonString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
     [Accengage trackEvent:key withParameters:@[jsonString]];
+}
+
+RCT_EXPORT_METHOD(
+	trackLead:(NSString *)label
+	value:(NSString *)value
+) {
+	if (!label || [label isEqualToString:@""]) {
+		NSLog(@"%@: No label was supplied", kRejectCode);
+		return;
+	}
+	if (!value || [value isEqualToString:@""]) {
+		NSLog(@"%@: No value was supplied", kRejectCode);
+		return;
+	}
+
+	[Accengage trackLead:label value:value];
 }
 
 @end

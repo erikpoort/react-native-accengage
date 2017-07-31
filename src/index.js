@@ -21,6 +21,17 @@ function trackEventWithCustomData(key, customData) {
   RNAccengageModule.trackEvent(key, customData);
 }
 
+/**
+ * Track a lead
+ * @param label
+ * @param value
+ */
+function trackLead(label, value) {
+  RNAccengageModule.trackLead(label, value);
+}
+
 module.exports = {
   trackEvent,
+  trackEventWithCustomData,
+  trackLead,
 }
