@@ -18,7 +18,7 @@ function trackEvent(key) {
  * @param customData An object with custom data to send along
  */
 function trackEventWithCustomData(key, customData) {
-  RNAccengageModule.trackEvent(key, customData);
+  RNAccengageModule.trackEventWithCustomData(key, customData);
 }
 
 /**
