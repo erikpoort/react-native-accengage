@@ -35,5 +35,4 @@ repositories {
 dependencies {
     compile 'com.facebook.react:react-native:0.45.1'
     compile 'com.ad4screen.sdk:A4SSDK:3.6.0'
-    compile 'com.ad4screen.sdk:plugin-firebase-messaging:2.0'
 }
