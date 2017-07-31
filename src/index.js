@@ -1,6 +1,23 @@
 import { NativeModules } from 'react-native';
 const { RNAccengageModule } = NativeModules;
-// import {} from './platform-specific';
+import { _hasPermissions, _requestPermissions } from './platform-specific';
+
+/**
+ * Check if user has granted push permissions
+ * @param callback Called with boolean
+ */
+function hasPermissions(callback) {
+  _hasPermissions(RNAccengageModule, result => {
+    callback(result);
+  });
+}
+
+/**
+ * Request push permissions, android will ignore this.
+ */
+function requestPermissions() {
+  _requestPermissions(RNAccengageModule);
+}
 
 /**
  * Track a custom event to enable segmentation in Accengage.
@@ -31,6 +48,8 @@ function trackLead(label, value) {
 }
 
 module.exports = {
+  hasPermissions,
+  requestPermissions,
   trackEvent,
   trackEventWithCustomData,
   trackLead,
