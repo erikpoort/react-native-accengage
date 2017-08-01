@@ -10,9 +10,47 @@
 #import <Accengage/Accengage.h>
 
 static NSString *const kRejectCode = @"RNAccengageModule.h";
+static NSString *const kPushRequested = @"pushRequested";
 
 @implementation RNAccengageModule
 RCT_EXPORT_MODULE();
+
+#pragma mark - Permissions
+
+RCT_EXPORT_METHOD(
+	hasPermissions:(RCTResponseSenderBlock)callback
+) {
+	UNUserNotificationCenter *notificationCenter = [UNUserNotificationCenter currentNotificationCenter];
+	if (notificationCenter) {
+		[notificationCenter getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings *settings)
+		{
+			callback(@[@(settings.authorizationStatus == UNAuthorizationStatusAuthorized)]);
+		}];
+	} else {
+		BOOL hasPermissions = [[UIApplication sharedApplication] isRegisteredForRemoteNotifications];
+		callback(@[@(hasPermissions)]);
+	}
+}
+
+RCT_EXPORT_METHOD(
+	requestPermissions
+) {
+	[self hasPermissions:^(NSArray <NSNumber *> *response)
+	{
+		BOOL hasPermissions = response.firstObject.boolValue;
+
+		if (!hasPermissions) {
+			if ([[NSUserDefaults standardUserDefaults] boolForKey:kPushRequested]) {
+				NSURL *url = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
+				[[UIApplication sharedApplication] openURL:url];
+			} else {
+				[[NSUserDefaults standardUserDefaults] setBool:YES forKey:kPushRequested];
+				ACCNotificationOptions options = (ACCNotificationOptionSound | ACCNotificationOptionBadge | ACCNotificationOptionAlert | ACCNotificationOptionCarPlay);
+				[[Accengage push] registerForUserNotificationsWithOptions:options];
+			}
+		}
+	}];
+}
 
 #pragma mark - Tracking
 
