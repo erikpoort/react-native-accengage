@@ -1,6 +1,6 @@
 # react-native-accengage
 ReactNative module for Accengage 6.0.0+
-Version 1.0.0
+Version 1.0.1
 
 ## Installation
 
@@ -28,8 +28,22 @@ Application.java.
 import Accengage from 'react-native-accengage';
 ```
 
-Right now only trackEvent, trackEventWithCustomData and trackLead are implemented. 
+Right now hasPermissions, requestPermission, trackEvent, trackEventWithCustomData and trackLead are 
+implemented. 
 ```js
+/**
+ * Check if user has granted push permissions
+ * @param callback Called with boolean
+ */
+Accengage.hasPermissions(RNAccengageModule, result => {
+  // result
+});
+
+/**
+ * Request push permissions, android will ignore this.
+ */
+Accengage.requestPermissions();
+
 /**
  * Track a custom event to enable segmentation in Accengage.
  * The key used should be setup in Accengage dashboard before use.
