@@ -35,14 +35,21 @@ RCT_EXPORT_METHOD(
 RCT_EXPORT_METHOD(
 	requestPermissions
 ) {
-	if ([[NSUserDefaults standardUserDefaults] boolForKey:kPushRequested]) {
-		NSURL *url = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
-		[[UIApplication sharedApplication] openURL:url];
-	} else {
-		[[NSUserDefaults standardUserDefaults] setBool:YES forKey:kPushRequested];
-		ACCNotificationOptions options = (ACCNotificationOptionSound | ACCNotificationOptionBadge | ACCNotificationOptionAlert | ACCNotificationOptionCarPlay);
-		[[Accengage push] registerForUserNotificationsWithOptions:options];
-	}
+	[self hasPermissions:^(NSArray <NSNumber *> *response)
+	{
+		BOOL hasPermissions = response.firstObject.boolValue;
+
+		if (!hasPermissions) {
+			if ([[NSUserDefaults standardUserDefaults] boolForKey:kPushRequested]) {
+				NSURL *url = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
+				[[UIApplication sharedApplication] openURL:url];
+			} else {
+				[[NSUserDefaults standardUserDefaults] setBool:YES forKey:kPushRequested];
+				ACCNotificationOptions options = (ACCNotificationOptionSound | ACCNotificationOptionBadge | ACCNotificationOptionAlert | ACCNotificationOptionCarPlay);
+				[[Accengage push] registerForUserNotificationsWithOptions:options];
+			}
+		}
+	}];
 }
 
 #pragma mark - Tracking
