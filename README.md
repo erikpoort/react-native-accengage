@@ -65,4 +65,12 @@ Accengage.trackEventWithCustomData(key, customData);
  * @param value
  */
 Accengage.trackLead(label, value);
+
+/**
+* Update device info
+* The object keys and values should be strings.
+* Date values should be strings formatted like: yyyy-MM-dd HH:mm:ss zzz
+* @param object
+*/
+Accengage.updateDeviceInfo(object);
 ```
