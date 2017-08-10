@@ -98,4 +98,17 @@ RCT_EXPORT_METHOD(
 	[Accengage trackLead:label value:value];
 }
 
+#pragma mark - Device info
+
+RCT_EXPORT_METHOD(
+		updateDeviceInfo:(NSDictionary <NSString *, NSString *> *)fields
+) {
+	if (!fields || fields.count == 0) {
+		NSLog(@"No fields were added");
+		return;
+	}
+
+	[Accengage updateDeviceInfo:fields];
+}
+
 @end

@@ -1,5 +1,6 @@
 package com.mediamonks.rnaccengage;
 
+import android.os.Bundle;
 import android.util.Log;
 
 import com.ad4screen.sdk.A4S;
@@ -71,5 +72,32 @@ class RNAccengageModule extends ReactContextBaseJavaModule
 
 		Lead lead = new Lead(leadLabel, leadValue);
 		A4S.get(getReactApplicationContext()).trackLead(lead);
+	}
+
+	@ReactMethod
+	public void updateDeviceInfo(ReadableMap object) {
+		if (object == null) {
+			Log.w(ACCENGAGE, "No object was supplied");
+			return;
+		}
+		if (!(object instanceof ReadableNativeMap)) {
+			Log.w(ACCENGAGE, "Object is sent in unsupported type");
+			return;
+		}
+
+		ReadableNativeMap nativeMap = (ReadableNativeMap) object;
+		HashMap<String, Object> hashMap = nativeMap.toHashMap();
+
+		Bundle bundle = new Bundle();
+		for (String key : hashMap.keySet()) {
+			Object value = hashMap.get(key);
+			if (value instanceof String) {
+				bundle.putString(key, (String) value);
+			} else {
+				Log.w(ACCENGAGE, "Value for key " + key + " is not a string and ignored.");
+			}
+		}
+
+		A4S.get(getReactApplicationContext()).updateDeviceInfo(bundle);
 	}
 }
