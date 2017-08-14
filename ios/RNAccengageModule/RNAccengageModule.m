@@ -101,7 +101,7 @@ RCT_EXPORT_METHOD(
 #pragma mark - Device info
 
 RCT_EXPORT_METHOD(
-		updateDeviceInfo:(NSDictionary <NSString *, NSString *> *)fields
+		updateDeviceInfo:(NSDictionary *)fields
 ) {
 	if (!fields || fields.count == 0) {
 		NSLog(@"No fields were added");
