@@ -25,7 +25,7 @@ function requestPermissions(userAction = false) {
  * This should be called every time you open the app
  * It will never trigger a dialog or open the settings app
  */
-function updateTokens(userAction) {
+function updateTokens() {
   _updateTokens(RNAccengageModule);
 }
 
