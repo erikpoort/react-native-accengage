@@ -1,6 +1,6 @@
 import { NativeModules } from 'react-native';
 const { RNAccengageModule } = NativeModules;
-import { _hasPermissions, _requestPermissions } from './platform-specific';
+import { _hasPermissions, _requestPermissions, _updateTokens } from './platform-specific';
 
 /**
  * Check if user has granted push permissions
@@ -14,9 +14,19 @@ function hasPermissions(callback) {
 
 /**
  * Request push permissions, android will ignore this.
+ * @param userAction Boolean Setting to true can open settings app
  */
-function requestPermissions() {
-  _requestPermissions(RNAccengageModule);
+function requestPermissions(userAction) {
+  _requestPermissions(RNAccengageModule, userAction);
+}
+
+/**
+ * Update push tokens
+ * This should be called every time you open the app
+ * It will never trigger a dialog or open the settings app
+ */
+function updateTokens(userAction) {
+  _updateTokens(RNAccengageModule);
 }
 
 /**
@@ -60,6 +70,7 @@ function updateDeviceInfo(object) {
 module.exports = {
   hasPermissions,
   requestPermissions,
+  updateTokens,
   trackEvent,
   trackEventWithCustomData,
   trackLead,
