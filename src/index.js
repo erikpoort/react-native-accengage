@@ -16,7 +16,7 @@ function hasPermissions(callback) {
  * Request push permissions, android will ignore this.
  * @param userAction Boolean Setting to true can open settings app
  */
-function requestPermissions(userAction) {
+function requestPermissions(userAction = false) {
   _requestPermissions(RNAccengageModule, userAction);
 }
 
