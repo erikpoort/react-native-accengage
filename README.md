@@ -1,6 +1,6 @@
 # react-native-accengage
 ReactNative module for Accengage 6.0.0+
-Version 1.1.0
+Version 1.1.2
 
 ## Installation
 
@@ -41,8 +41,17 @@ Accengage.hasPermissions(RNAccengageModule, result => {
 
 /**
  * Request push permissions, android will ignore this.
+ * @param userAction Boolean When this is true, the settings app will be opened if the user didn't 
+ *                           grant permissions. 
  */
-Accengage.requestPermissions();
+Accengage.requestPermissions(userAction);
+
+/**
+ * Update push tokens
+ * This should be called every time you open the app
+ * It will never trigger a dialog or open the settings app
+ */
+Accengage.updateTokens();
 
 /**
  * Track a custom event to enable segmentation in Accengage.

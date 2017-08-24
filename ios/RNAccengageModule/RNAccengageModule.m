@@ -33,21 +33,21 @@ RCT_EXPORT_METHOD(
 }
 
 RCT_EXPORT_METHOD(
-	requestPermissions
+	updatePermissions:(BOOL)request userAction:(BOOL)userAction
 ) {
 	[self hasPermissions:^(NSArray <NSNumber *> *response)
 	{
 		BOOL hasPermissions = response.firstObject.boolValue;
 
-		if (!hasPermissions) {
-			if ([[NSUserDefaults standardUserDefaults] boolForKey:kPushRequested]) {
-				NSURL *url = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
-				[[UIApplication sharedApplication] openURL:url];
-			} else {
-				[[NSUserDefaults standardUserDefaults] setBool:YES forKey:kPushRequested];
-				ACCNotificationOptions options = (ACCNotificationOptionSound | ACCNotificationOptionBadge | ACCNotificationOptionAlert | ACCNotificationOptionCarPlay);
-				[[Accengage push] registerForUserNotificationsWithOptions:options];
-			}
+		if (userAction && !hasPermissions && [[NSUserDefaults standardUserDefaults] boolForKey:kPushRequested]) {
+			// There's no permissions, the user was asked before and this call is triggered by user action
+			NSURL *url = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
+			[[UIApplication sharedApplication] openURL:url];
+		} else if (request || hasPermissions) {
+			// There's permissions so we are updating, or we are requesting for the first time
+			[[NSUserDefaults standardUserDefaults] setBool:YES forKey:kPushRequested];
+			ACCNotificationOptions options = (ACCNotificationOptionSound | ACCNotificationOptionBadge | ACCNotificationOptionAlert | ACCNotificationOptionCarPlay);
+			[[Accengage push] registerForUserNotificationsWithOptions:options];
 		}
 	}];
 }

@@ -9,10 +9,17 @@ function _hasPermissions(Module, callback) {
 /**
  * Request push permissions, android will ignore this.
  */
-function _requestPermissions(Module) {
+function _requestPermissions(Module, userAction) {
+}
+
+/**
+ * Update push token, android will ignore this.
+ */
+function _updateTokens(Module) {
 }
 
 module.exports = {
   _hasPermissions,
   _requestPermissions,
+  _updateTokens,
 }
