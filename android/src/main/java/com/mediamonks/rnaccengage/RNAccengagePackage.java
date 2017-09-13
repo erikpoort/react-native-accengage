@@ -25,7 +25,8 @@ public class RNAccengagePackage implements ReactPackage
 		return modules;
 	}
 
-	@Override
+	// RN deprecated Android createJSModules
+	// @Override
 	public List<Class<? extends JavaScriptModule>> createJSModules()
 	{
 		return Collections.emptyList();
