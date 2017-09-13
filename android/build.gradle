@@ -33,6 +33,6 @@ repositories {
 }
 
 dependencies {
-    compile 'com.facebook.react:react-native:0.45.1'
+    compile 'com.facebook.react:react-native:+'
     compile 'com.ad4screen.sdk:A4SSDK:3.6.0'
 }
