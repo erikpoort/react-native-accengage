@@ -15,24 +15,20 @@ import java.util.List;
  * MediaMonks 2017
  */
 
-public class RNAccengagePackage implements ReactPackage
-{
-	@Override
-	public List<NativeModule> createNativeModules(ReactApplicationContext reactContext)
-	{
-		List<NativeModule> modules = new ArrayList<>();
-		modules.add(new RNAccengageModule(reactContext));
-		return modules;
-	}
+public class RNAccengagePackage implements ReactPackage {
+    @Override
+    public List<NativeModule> createNativeModules(ReactApplicationContext reactContext) {
+        List<NativeModule> modules = new ArrayList<>();
+        modules.add(new RNAccengageModule(reactContext));
+        return modules;
+    }
 
-	public List<Class<? extends JavaScriptModule>> createJSModules()
-	{
-		return Collections.emptyList();
-	}
+    public List<Class<? extends JavaScriptModule>> createJSModules() {
+        return Collections.emptyList();
+    }
 
-	@Override
-	public List<ViewManager> createViewManagers(ReactApplicationContext reactContext)
-	{
-		return Collections.emptyList();
-	}
+    @Override
+    public List<ViewManager> createViewManagers(ReactApplicationContext reactContext) {
+        return Collections.emptyList();
+    }
 }
