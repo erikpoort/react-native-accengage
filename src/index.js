@@ -67,6 +67,26 @@ function updateDeviceInfo(object) {
   RNAccengageModule.updateDeviceInfo(object);
 }
 
+/**
+ * Get Inbox Messages
+ * @param callback returns an inbox messages list
+ */
+ function getInboxMessages(){
+
+  return RNAccengageModule.getInboxMessages();
+ }
+
+ /**
+ * Get Inbox Messages
+ * @param index
+ * @return Promise with an Accengage Inbox Message or error
+ */
+ function getMessage(index){
+  return RNAccengageModule.getMessageAtIndex(index);
+ }
+
+
+
 module.exports = {
   hasPermissions,
   requestPermissions,
@@ -75,4 +95,6 @@ module.exports = {
   trackEventWithCustomData,
   trackLead,
   updateDeviceInfo,
+  getInboxMessages,
+  getMessage
 }
