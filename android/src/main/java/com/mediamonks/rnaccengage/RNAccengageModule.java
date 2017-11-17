@@ -22,6 +22,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by erik on 28/07/2017.
@@ -236,10 +237,18 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
 
     private WritableMap transformMessageToMap(Message message, boolean limitBody) {
         WritableMap map = Arguments.createMap();
+
         String body = message.getBody();
         if (limitBody && body.length() > 140) {
             body = body.substring(0, 140);
         }
+
+        Bundle bundle = new Bundle();
+        for (Map.Entry<String, String> entry : message.getCustomParameters().entrySet()) {
+            bundle.putString(entry.getKey(), entry.getValue());
+        }
+        WritableMap customParameters = Arguments.fromBundle(bundle);
+
         map.putString("title", message.getTitle());
         map.putString("body", body);
         map.putDouble("timestamp", message.getSendDate().getTime());
@@ -247,7 +256,8 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         map.putString("sender", message.getSender());
         map.putBoolean("read", message.isRead());
         map.putBoolean("archived", message.isArchived());
-        // TODO loadedMessage.getCustomParameters() / HashMap to WritableMap
+        map.putMap("customParameters", customParameters);
+
         return map;
     }
 
