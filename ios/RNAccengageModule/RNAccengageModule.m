@@ -8,11 +8,16 @@
 
 #import "RNAccengageModule.h"
 #import <Accengage/Accengage.h>
+#import <React/RCTUtils.h>
+
 
 static NSString *const kRejectCode = @"RNAccengageModule.h";
 static NSString *const kPushRequested = @"pushRequested";
 
 @implementation RNAccengageModule
+    BMA4SInBox      *_inboxMessageList;
+    NSMutableArray  *_messageList;
+
 RCT_EXPORT_MODULE();
 
 #pragma mark - Permissions
@@ -96,6 +101,116 @@ RCT_EXPORT_METHOD(
 	}
 
 	[Accengage trackLead:label value:value];
+}
+
+#pragma mark - Get Inbox Messages
+
+RCT_EXPORT_METHOD(
+    getInboxMessages:(RCTResponseSenderBlock)callback
+                     rejecter:(RCTPromiseRejectBlock)reject
+){
+
+    //Get Accengage Inbox
+    [self getAccengageInboxWithSuccess:^(BMA4SInBox *inbox) {
+        _inboxMessageList = inbox;
+        
+        //get message list
+        [self getAccengageMessagesWithSuccess:^(NSMutableArray* messages) {
+            callback(messages);
+        } failure:^(NSString *code, NSString *message, NSError *error) {
+            reject(code,message,error);
+        }];
+        
+    } failure:^(BMA4SInBoxLoadingResult result) {
+        NSString *operation = (result == BMA4SInBoxLoadingResultCancelled ? @"Cancelled" : @"Failed");
+        NSString *errorMessage = [NSString stringWithFormat:@"Inbox loading result had been %@",operation];
+        NSString *operationCode = [NSString stringWithFormat:@"%@",@(result)];
+        reject(operationCode,errorMessage,nil);
+    }];
+}
+
+
+//Get Accengage inbox
+//@success BMA4SInBox
+//@failure BMA4SInBoxLoadingResult
+//
+- (void)getAccengageInboxWithSuccess:(void (^)(BMA4SInBox *inbox))success failure:(void (^)(BMA4SInBoxLoadingResult result))failure
+{
+    [BMA4SInBox obtainMessagesWithCompletionHandler:^(BMA4SInBoxLoadingResult result, BMA4SInBox *inbox) {
+        if(result != BMA4SInBoxLoadingResultLoaded)
+        {
+            failure(result);
+        }else{
+            success(inbox);
+        }
+    }];
+}
+
+//Get Message list
+//@success return a maximun of 10 messages
+//@failure BMA4SInBoxLoadingResult
+//
+- (void)getAccengageMessagesWithSuccess:(void (^)(NSMutableArray *messages))success failure:(RCTPromiseRejectBlock)failure
+{
+    _messageList = [NSMutableArray new];
+    
+    int maximum = MIN((int)_inboxMessageList.size, 10);
+    
+    for (int i = 0; i < maximum; i++)
+    {
+        [_messageList addObject:[NSNull null]];
+        [self getInboxMessageAtIndex:i+1 messageCallback:^(NSArray *response) {
+            //override object at index
+            [_messageList setObject:response.firstObject atIndexedSubscript:i];
+            
+            //if the message is the last of the array
+            if(_messageList.count == i)
+            {
+                success(_messageList);
+            }
+        } rejecter:^(NSString *code, NSString *message, NSError *error) {
+            failure(code,message,error);
+        }];
+    }
+    
+    success([NSMutableArray new]);
+}
+
+RCT_EXPORT_METHOD(
+                  getInboxMessageAtIndex:(int)index
+                  messageCallback:(RCTResponseSenderBlock)callback
+                  rejecter:(RCTPromiseRejectBlock)reject
+){
+    //
+    //Check if the Inbox message list exists
+    //
+    if(_inboxMessageList != nil)
+    {
+        NSUInteger nsi = (NSUInteger) index;
+        
+        [_inboxMessageList obtainMessageAtIndex:nsi loaded:^(BMA4SInBoxMessage *message, NSUInteger requestedIndex) {
+        
+            //Create Message Dictionary
+            NSDictionary *messageData = @{@"title"       : message.title,
+                                          @"body"        : message.text,
+                                          @"timestamp"   : message.date,
+                                          @"category"    : message.category,
+                                          @"sender"      : message.from,
+                                          @"read"        : [NSNumber numberWithBool:message.isRead],
+                                          @"archived"    : [NSNumber numberWithBool:message.isArchived]
+                                          };
+            
+            callback(@[messageData]);
+        } onError:^(NSUInteger requestedIndex) {
+            NSString *errorMessage = @"the call to obtain message at index ";
+            NSString *operationCode = [NSString stringWithFormat:@"%@",@(AccengageCallResultError)];
+            reject(operationCode,errorMessage,nil);
+        }];
+    }else{
+        NSString *errorMessage = @"You need to call to getInboxMessage before call getInboxMessageAtIndex";
+        NSString *operationCode = [NSString stringWithFormat:@"%@",@(InboxMessageListNotExists)];
+        reject(operationCode,errorMessage,nil);
+    }
 }
 
 #pragma mark - Device info
