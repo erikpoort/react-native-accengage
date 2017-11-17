@@ -108,7 +108,6 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
 
     // TODO useful errors
     // TODO Sync errors with iOS version
-    // TODO add clear cache method
     // TODO add mark as read
     // TODO add mark as archive
 
@@ -166,7 +165,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         for (int i = 0; i < leni; ++i) {
             final int currentIndex = startIndex + i;
 
-            Message cachedMessage = _messages.get(currentIndex, null);
+            Message cachedMessage = _messages.get(currentIndex);
             if (cachedMessage != null) {
                 _loadedMessages.put(currentIndex, cachedMessage);
                 _numLoadedMessages--;
@@ -177,6 +176,13 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
 
             _inbox.getMessage(currentIndex, new A4S.MessageCallback() {
                 @Override public void onResult(Message message, int loadedMessageIndex) {
+                    if (_inbox == null) {
+                        // clearMessages was called and thus these calls are canceled and can be ignored.
+                        if (promise != null) {
+                            promise.reject(ACCENGAGE, "Canceled");
+                        }
+                    }
+
                     _loadedMessages.put(loadedMessageIndex, message);
                     _numLoadedMessages--;
 
@@ -184,6 +190,13 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
                 }
 
                 @Override public void onError(int failedMessageIndex, String s) {
+                    if (_inbox == null) {
+                        // clearMessages was called and thus these calls are canceled and can be ignored.
+                        if (promise != null) {
+                            promise.reject(ACCENGAGE, "Canceled");
+                        }
+                    }
+
                     _numLoadedMessages--;
 
                     resolvePromiseIfReady(pageIndex, limit, promise);
@@ -203,7 +216,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
 
             for (int i = 0; i < leni; ++i) {
                 int currentIndex = startIndex + i;
-                Message loadedMessage = _loadedMessages.get(currentIndex, null);
+                Message loadedMessage = _loadedMessages.get(currentIndex);
 
                 if (loadedMessage != null) {
                     // Merge to cache
@@ -241,7 +254,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void getMessage(final int index, final Promise promise) {
         // See if we have a cached message for that index and return it if so.
-        if (_messages != null && _messages.get(index, null) != null) {
+        if (_messages != null && _messages.get(index) != null) {
             promise.resolve(transformMessageToMap(_messages.get(index), false));
             return;
         }
@@ -271,5 +284,12 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
                 promise.reject(ACCENGAGE, s);
             }
         });
+    }
+
+    @ReactMethod
+    public void clearMessages() {
+        _messages = null;
+        _loadedMessages = null;
+        _inbox = null;
     }
 }
