@@ -18,7 +18,6 @@ static NSString *const kPushRequested = @"pushRequested";
     BMA4SInBox      *_inbox;
     NSMutableArray  *_messageList;
     int             _numLoadedMessages;
-
 RCT_EXPORT_MODULE();
 
 #pragma mark - Permissions
