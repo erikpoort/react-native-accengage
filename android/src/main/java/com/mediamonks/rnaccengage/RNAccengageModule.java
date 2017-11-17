@@ -109,7 +109,6 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
 
     // TODO useful errors
     // TODO Sync errors with iOS version
-    // TODO add mark as archive
 
     private Inbox _inbox;
     private SparseArray<Message> _messages; // TODO primitives
@@ -314,6 +313,29 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         }
 
         message.setRead(read);
+
+        A4S.get(getReactApplicationContext()).updateMessages(_inbox);
+    }
+
+    @ReactMethod
+    public void markMessageAsArchived(final int index, final boolean archived, final Promise promise) {
+        if (_messages == null) {
+            promise.reject(ACCENGAGE, "There's no messages to mark");
+            return;
+        }
+        if (_inbox == null) {
+            promise.reject(ACCENGAGE, "There's no inbox to update");
+            return;
+        }
+
+        Message message = _messages.get(index);
+
+        if (message == null) {
+            promise.reject(ACCENGAGE, "Couldn't find the message to mark");
+            return;
+        }
+
+        message.setArchived(archived);
 
         A4S.get(getReactApplicationContext()).updateMessages(_inbox);
     }
