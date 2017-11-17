@@ -15,6 +15,7 @@ import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.ReadableNativeMap;
+import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 
 import org.json.JSONObject;
@@ -117,11 +118,11 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void getInboxMessages(final Promise promise) {
-        getInboxMessages(0, 10, promise);
+        getInboxMessagesPaginated(0, 10, promise);
     }
 
     @ReactMethod
-    public void getInboxMessages(final int pageIndex, final int limit, final Promise promise) {
+    public void getInboxMessagesPaginated(final int pageIndex, final int limit, final Promise promise) {
         if (_inbox == null) {
             // If inbox doesn't exist, create a new one
             A4S.get(getReactApplicationContext()).getInbox(new A4S.Callback<Inbox>() {
@@ -156,7 +157,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         }
 
         final int startIndex = pageIndex * limit;
-        final int leni = Math.max(_inbox.countMessages(), startIndex + limit);
+        final int leni = Math.min(_inbox.countMessages(), limit);
 
         _loadedMessages = new SparseArray<>();
         _numLoadedMessages = leni;
@@ -179,6 +180,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
                         // clearMessages was called and thus these calls are canceled and can be ignored.
                         if (promise != null) {
                             promise.reject(ACCENGAGE, "Canceled");
+                            return;
                         }
                     }
 
@@ -193,6 +195,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
                         // clearMessages was called and thus these calls are canceled and can be ignored.
                         if (promise != null) {
                             promise.reject(ACCENGAGE, "Canceled");
+                            return;
                         }
                     }
 
@@ -202,6 +205,8 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
                 }
             });
         }
+
+        resolvePromiseIfReady(pageIndex, limit, promise);
     }
 
     private void resolvePromiseIfReady(int pageIndex, int limit, Promise promise) {
@@ -209,9 +214,9 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         if (_numLoadedMessages == 0) {
 
             final int startIndex = pageIndex * limit;
-            final int leni = Math.min(_inbox.countMessages(), startIndex + limit);
+            final int leni = Math.min(_inbox.countMessages(), limit);
 
-            List<WritableMap> messageList = new ArrayList<>();
+            WritableArray messageList = Arguments.createArray();
 
             for (int i = 0; i < leni; ++i) {
                 int currentIndex = startIndex + i;
@@ -222,7 +227,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
                     _messages.put(currentIndex, loadedMessage);
 
                     // Handle for callback
-                    messageList.add(transformMessageToMap(loadedMessage, true));
+                    messageList.pushMap(transformMessageToMap(loadedMessage, true));
                 }
                 // else {
                 //      TODO unloaded / failed messages
