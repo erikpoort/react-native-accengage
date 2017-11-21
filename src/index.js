@@ -114,7 +114,6 @@ function updateDeviceInfo(object) {
  }
 
 
-
 module.exports = {
   hasPermissions,
   requestPermissions,

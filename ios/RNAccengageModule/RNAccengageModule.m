@@ -106,7 +106,6 @@ RCT_EXPORT_METHOD(
 }
 
 #pragma mark - Get Inbox Messages
-
 //Get Message list with pagination
 //@success RCTResponseSenderBlock
 //@failure BMA4SInBoxLoadingResult
@@ -137,7 +136,6 @@ RCT_EXPORT_METHOD(
     //Get Accengage Inbox
     [self getAccengageInboxWithSuccess:^(BMA4SInBox *inbox) {
         _inbox = inbox;
-        
         //Get Accengage Messsages From Index with limit
         [self getMessagesFromIndex:pageIndex limit:limit messageListCallback:^(NSArray *response) {
             callback(response);
@@ -169,7 +167,6 @@ RCT_EXPORT_METHOD(
         }
     }];
 }
-
 
 //Get Message list
 //@params pageIndex
