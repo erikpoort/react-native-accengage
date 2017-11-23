@@ -15,62 +15,62 @@ static NSString *const kRejectCode = @"RNAccengageModule.h";
 static NSString *const kPushRequested = @"pushRequested";
 
 @implementation RNAccengageModule
-    BMA4SInBox      *_inbox;
-    NSMutableArray  *_messages;
-    NSMutableArray  *_loadedMessages;
-    int             _numLoadedMessages;
+BMA4SInBox      *_inbox;
+NSMutableArray  *_messages;
+NSMutableArray  *_loadedMessages;
+int             _numLoadedMessages;
 
 RCT_EXPORT_MODULE();
 
 #pragma mark - Permissions
 
 RCT_EXPORT_METHOD(
-	hasPermissions:(RCTResponseSenderBlock)callback
-) {
-	UNUserNotificationCenter *notificationCenter = [UNUserNotificationCenter currentNotificationCenter];
-	if (notificationCenter) {
-		[notificationCenter getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings *settings)
-		{
-			callback(@[@(settings.authorizationStatus == UNAuthorizationStatusAuthorized)]);
-		}];
-	} else {
-		BOOL hasPermissions = [[UIApplication sharedApplication] isRegisteredForRemoteNotifications];
-		callback(@[@(hasPermissions)]);
-	}
+                  hasPermissions:(RCTResponseSenderBlock)callback
+                  ) {
+    UNUserNotificationCenter *notificationCenter = [UNUserNotificationCenter currentNotificationCenter];
+    if (notificationCenter) {
+        [notificationCenter getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings *settings)
+         {
+             callback(@[@(settings.authorizationStatus == UNAuthorizationStatusAuthorized)]);
+         }];
+    } else {
+        BOOL hasPermissions = [[UIApplication sharedApplication] isRegisteredForRemoteNotifications];
+        callback(@[@(hasPermissions)]);
+    }
 }
 
 RCT_EXPORT_METHOD(
-	updatePermissions:(BOOL)request userAction:(BOOL)userAction
-) {
-	[self hasPermissions:^(NSArray <NSNumber *> *response)
-	{
-		BOOL hasPermissions = response.firstObject.boolValue;
-
-		if (userAction && !hasPermissions && [[NSUserDefaults standardUserDefaults] boolForKey:kPushRequested]) {
-			// There's no permissions, the user was asked before and this call is triggered by user action
-			NSURL *url = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
-			[[UIApplication sharedApplication] openURL:url];
-		} else if (request || hasPermissions) {
-			// There's permissions so we are updating, or we are requesting for the first time
-			[[NSUserDefaults standardUserDefaults] setBool:YES forKey:kPushRequested];
-			ACCNotificationOptions options = (ACCNotificationOptionSound | ACCNotificationOptionBadge | ACCNotificationOptionAlert | ACCNotificationOptionCarPlay);
-			[[Accengage push] registerForUserNotificationsWithOptions:options];
-		}
-	}];
+                  updatePermissions:(BOOL)request userAction:(BOOL)userAction
+                  ) {
+    [self hasPermissions:^(NSArray <NSNumber *> *response)
+     {
+         BOOL hasPermissions = response.firstObject.boolValue;
+         
+         if (userAction && !hasPermissions && [[NSUserDefaults standardUserDefaults] boolForKey:kPushRequested]) {
+             // There's no permissions, the user was asked before and this call is triggered by user action
+             NSURL *url = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
+             [[UIApplication sharedApplication] openURL:url];
+         } else if (request || hasPermissions) {
+             // There's permissions so we are updating, or we are requesting for the first time
+             [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kPushRequested];
+             ACCNotificationOptions options = (ACCNotificationOptionSound | ACCNotificationOptionBadge | ACCNotificationOptionAlert | ACCNotificationOptionCarPlay);
+             [[Accengage push] registerForUserNotificationsWithOptions:options];
+         }
+     }];
 }
 
 #pragma mark - Tracking
 
 RCT_EXPORT_METHOD(
-    trackEvent:(NSUInteger)key
-) {
+                  trackEvent:(NSUInteger)key
+                  ) {
     [Accengage trackEvent:key];
 }
 
 RCT_EXPORT_METHOD(
-    trackEventWithCustomData:(NSUInteger)key
-    customData:(NSDictionary *)customData
-) {
+                  trackEventWithCustomData:(NSUInteger)key
+                  customData:(NSDictionary *)customData
+                  ) {
     if (!customData) {
         [Accengage trackEvent:key];
         return;
@@ -90,30 +90,30 @@ RCT_EXPORT_METHOD(
 }
 
 RCT_EXPORT_METHOD(
-	trackLead:(NSString *)label
-	value:(NSString *)value
-) {
-	if (!label || [label isEqualToString:@""]) {
-		NSLog(@"%@: No label was supplied", kRejectCode);
-		return;
-	}
-	if (!value || [value isEqualToString:@""]) {
-		NSLog(@"%@: No value was supplied", kRejectCode);
-		return;
-	}
-
-	[Accengage trackLead:label value:value];
+                  trackLead:(NSString *)label
+                  value:(NSString *)value
+                  ) {
+    if (!label || [label isEqualToString:@""]) {
+        NSLog(@"%@: No label was supplied", kRejectCode);
+        return;
+    }
+    if (!value || [value isEqualToString:@""]) {
+        NSLog(@"%@: No value was supplied", kRejectCode);
+        return;
+    }
+    
+    [Accengage trackLead:label value:value];
 }
 
 #pragma mark - Get Inbox Messages
 //Get Message list with pagination
-//@success RCTResponseSenderBlock
+//@success RCTPromiseResolveBlock
 //@failure BMA4SInBoxLoadingResult
 RCT_EXPORT_METHOD(
-                  getInboxMessages:(RCTResponseSenderBlock)callback
+                  getInboxMessages:(RCTPromiseResolveBlock)callback
                   rejecter:(RCTPromiseRejectBlock)reject
                   ){
-    [self getInboxMessagesWithPageIndex:0 limit:10 successCallback:^(NSArray *response) {
+    [self getInboxMessagesWithPageIndex:0 limit:20 successCallback:^(NSArray *response) {
         callback(response);
     } rejecter:^(NSString *code, NSString *message, NSError *error) {
         reject(code,message,error);
@@ -124,15 +124,15 @@ RCT_EXPORT_METHOD(
 //Get Message list
 //@params pageIndex
 //@params limit
-//@success RCTResponseSenderBlock
+//@success RCTPromiseResolveBlock
 //@failure BMA4SInBoxLoadingResult
 RCT_EXPORT_METHOD(
-      getInboxMessagesWithPageIndex:(int)pageIndex
-                       limit:(int)limit
-                       successCallback:(RCTResponseSenderBlock)callback
-                       rejecter:(RCTPromiseRejectBlock)reject
-){
-
+                  getInboxMessagesWithPageIndex:(int)pageIndex
+                  limit:(int)limit
+                  successCallback:(RCTPromiseResolveBlock)callback
+                  rejecter:(RCTPromiseRejectBlock)reject
+                  ){
+    
     //Get Accengage Inbox
     [self getAccengageInboxWithSuccess:^(BMA4SInBox *inbox) {
         _inbox = inbox;
@@ -171,10 +171,10 @@ RCT_EXPORT_METHOD(
 //Get Message list
 //@params pageIndex
 //@params limit
-//@success RCTResponseSenderBlock
+//@success RCTPromiseResolveBlock
 //@failure BMA4SInBoxLoadingResult
 //
-- (void)getMessagesFromIndex:(int)pageIndex limit:(int)limit messageListCallback:(RCTResponseSenderBlock)callback rejecter:(RCTPromiseRejectBlock)reject
+- (void)getMessagesFromIndex:(int)pageIndex limit:(int)limit messageListCallback:(RCTPromiseResolveBlock)callback rejecter:(RCTPromiseRejectBlock)reject
 {
     if(_loadedMessages != nil)
     {
@@ -195,7 +195,7 @@ RCT_EXPORT_METHOD(
         
         _loadedMessages = [NSMutableArray new];
         _numLoadedMessages = leni;
-    
+        
         for (int i =  0; i < limit; i++)
         {
             int currentIndex = startIndex + i;
@@ -233,16 +233,63 @@ RCT_EXPORT_METHOD(
         }
         
     }else{
-        callback(@[]);
+        //PRAGMA MARK: Uncomment after delete the warning below this callback
+        //        callback(@[]);
+        
+#pragma WARNING remove when there is Accengage Inbox Messages data
+        
+        NSMutableArray *dummyMessages = [self createMessagesDummyWithLimit:limit];
+        callback(@[dummyMessages]);
+        
     }
+}
+
+#pragma mark Create Messages Dummy
+- (NSMutableArray *)createMessagesDummyWithLimit:(int)limit
+{
+    //Get Current Date
+    NSDate* date = [NSDate date];
+    NSDateFormatter* formatter = [[NSDateFormatter alloc] init];
+    NSTimeZone *destinationTimeZone = [NSTimeZone systemTimeZone];
+    formatter.timeZone = destinationTimeZone;
+    [formatter setDateStyle:NSDateFormatterLongStyle];
+    [formatter setDateFormat:@"MM/dd/yyyy hh:mma"];
+    NSString* dateString = [formatter stringFromDate:date];
+    
+    NSDictionary *messageData = @{@"type"        : @"message",
+                                  @"title"       : @"Welcome Message",
+                                  @"body"        : @"This is a test message",
+                                  @"timestamp"   : dateString,
+                                  @"category"    : @"Message's Category",
+                                  @"sender"      : @"Sender",
+                                  @"read"        : @false,
+                                  @"archived"    : @false,
+                                  @"customParameters" : @{}
+                                  };
+    
+    NSDictionary *errorMessageData = [self getErrorMessageDictionary];
+    
+    NSMutableArray *messages = [NSMutableArray new];
+
+    for(int i = 0;i < limit; i++)
+    {
+        if(i % 2 == 0)
+        {
+            [messages addObject:messageData];
+        }else{
+            [messages addObject:errorMessageData];
+        }
+    }
+    
+    return messages;
 }
 
 RCT_EXPORT_METHOD(
                   resolvePromiseIfReadyWithPageIndex:(int)pageIndex
                   limit:(int)limit
-                  messageCallback:(RCTResponseSenderBlock)callback
+                  messageCallback:(RCTPromiseResolveBlock)callback
                   rejecter:(RCTPromiseRejectBlock)reject
-){
+                  ){
     if(_numLoadedMessages == 0)
     {
         int startIndex = pageIndex * limit;
@@ -262,13 +309,20 @@ RCT_EXPORT_METHOD(
                 NSDictionary *messageData = [self getMessageDictionary:loadedMessage withLimitBody:true];
                 [messageList addObject:messageData];
             }
-            //else{
-            //      TODO unloaded / failed messages
-            //}
+            else{
+                //if get message call failed
+                NSDictionary *errorMessageData = [self getErrorMessageDictionary];
+                [messageList addObject:errorMessageData];
+            }
         }
         
         callback(messageList);
     }
+}
+
+- (NSDictionary *)getErrorMessageDictionary
+{
+    return @{@"type" : @"error"};
 }
 
 - (NSDictionary *)getMessageDictionary:(BMA4SInBoxMessage *)message withLimitBody:(bool)isLimitBody
@@ -297,9 +351,9 @@ RCT_EXPORT_METHOD(
 
 RCT_EXPORT_METHOD(
                   getInboxMessageAtIndex:(int)index
-                  messageCallback:(RCTResponseSenderBlock)callback
+                  messageCallback:(RCTPromiseResolveBlock)callback
                   rejecter:(RCTPromiseRejectBlock)reject
-){
+                  ){
     //
     //Check if the Inbox message list exists
     //
@@ -325,9 +379,9 @@ RCT_EXPORT_METHOD(
 RCT_EXPORT_METHOD(
                   markMessageAsRead:(int)index
                   Read:(bool)isRead
-                  callback:(RCTResponseSenderBlock)callback
+                  callback:(RCTPromiseResolveBlock)callback
                   rejecter:(RCTPromiseRejectBlock)reject
-){
+                  ){
     if(_messages == nil)
     {
         NSString *errorMessage = @"There's no messages to mark";
@@ -358,7 +412,7 @@ RCT_EXPORT_METHOD(
 RCT_EXPORT_METHOD(
                   markMessageAsArchived:(int)index
                   Read:(bool)isRead
-                  callback:(RCTResponseSenderBlock)callback
+                  callback:(RCTPromiseResolveBlock)callback
                   rejecter:(RCTPromiseRejectBlock)reject
                   ){
     if(_messages == nil)
@@ -390,14 +444,15 @@ RCT_EXPORT_METHOD(
 #pragma mark - Device info
 
 RCT_EXPORT_METHOD(
-		updateDeviceInfo:(NSDictionary *)fields
-) {
-	if (!fields || fields.count == 0) {
-		NSLog(@"No fields were added");
-		return;
-	}
-
-	[Accengage updateDeviceInfo:fields];
+                  updateDeviceInfo:(NSDictionary *)fields
+                  ) {
+    if (!fields || fields.count == 0) {
+        NSLog(@"No fields were added");
+        return;
+    }
+    
+    [Accengage updateDeviceInfo:fields];
 }
 
 @end
+
