@@ -206,7 +206,9 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
             });
         }
 
-        resolvePromiseIfReady(pageIndex, limit, promise);
+        if (leni == 0) {
+            resolvePromiseIfReady(pageIndex, limit, promise);
+        }
     }
 
     private void resolvePromiseIfReady(int pageIndex, int limit, Promise promise) {
