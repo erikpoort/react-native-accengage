@@ -243,6 +243,8 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
                 }
             }
 
+            _loadedMessages = null;
+
             promise.resolve(messageList);
         }
     }
