@@ -31,6 +31,11 @@ import java.util.Map;
 class RNAccengageModule extends ReactContextBaseJavaModule {
     private static final String ACCENGAGE = "RNAccengageModule";
 
+    private static final String ERROR_LOADING_INBOX_FAILED = "loading_inbox_failed";
+    private static final String ERROR_LOADING_MESSAGE_FAILED = "loading_message_failed";
+    private static final String ERROR_ALREADY_LOADING = "already_loading";
+    private static final String ERROR_GENERAL = "general_error";
+
     RNAccengageModule(ReactApplicationContext reactContext) {
         super(reactContext);
     }
@@ -106,9 +111,6 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         A4S.get(getReactApplicationContext()).updateDeviceInfo(bundle);
     }
 
-    // TODO useful errors
-    // TODO Sync errors with iOS version
-
     private Inbox _inbox;
     private SparseArray<Message> _messages;
     private SparseArray<MessageResult> _loadedMessages;
@@ -130,7 +132,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
                 }
 
                 @Override public void onError(int i, String s) {
-                    promise.reject(ACCENGAGE, s);
+                    promise.reject(ERROR_LOADING_INBOX_FAILED, s);
                 }
             });
         } else {
@@ -141,11 +143,11 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
 
     private void _getInboxMessages(final int pageIndex, final int limit, final Promise promise) {
         if (_loadedMessages != null) {
-            promise.reject(ACCENGAGE, "There's already messages being loaded");
+            promise.reject(ERROR_ALREADY_LOADING, "There's already messages being loaded");
             return;
         }
         if (_inbox == null) {
-            promise.reject(ACCENGAGE, "Inbox was null");
+            promise.reject(ERROR_GENERAL, "Inbox was null");
             return;
         }
 
@@ -176,10 +178,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
                 @Override public void onResult(Message message, int loadedMessageIndex) {
                     if (_inbox == null) {
                         // clearMessages was called and thus these calls are canceled and can be ignored.
-                        if (promise != null) {
-                            promise.reject(ACCENGAGE, "Canceled");
-                            return;
-                        }
+                        return;
                     }
 
                     _loadedMessages.put(loadedMessageIndex, new MessageResult(loadedMessageIndex, message));
@@ -191,10 +190,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
                 @Override public void onError(int failedMessageIndex, String s) {
                     if (_inbox == null) {
                         // clearMessages was called and thus these calls are canceled and can be ignored.
-                        if (promise != null) {
-                            promise.reject(ACCENGAGE, "Canceled");
-                            return;
-                        }
+                        return;
                     }
 
                     _loadedMessages.put(failedMessageIndex, new MessageResult(failedMessageIndex, s));
@@ -225,7 +221,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
 
                 if (messageResult == null) {
                     if (promise != null) {
-                        promise.reject(ACCENGAGE, "Something went wrong.");
+                        promise.reject(ERROR_GENERAL, "A result was null.");
                     }
                     return;
                 }
@@ -289,15 +285,15 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
 
         // Do validation before we load a missing message
         if (_inbox == null) {
-            promise.reject(ACCENGAGE, "Inbox doesn't exist");
+            promise.reject(ERROR_GENERAL, "Inbox doesn't exist anymore");
             return;
         }
         if (_messages == null) {
-            promise.reject(ACCENGAGE, "There's no messages left");
+            promise.reject(ERROR_GENERAL, "Messages disappeared");
             return;
         }
         if (_loadedMessages != null) {
-            promise.reject(ACCENGAGE, "There's already messages being loaded");
+            promise.reject(ERROR_ALREADY_LOADING, "Messages are already being loaded");
             return;
         }
 
@@ -309,26 +305,26 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
             }
 
             @Override public void onError(int failedMessageIndex, String s) {
-                promise.reject(ACCENGAGE, s);
+                promise.reject(ERROR_LOADING_MESSAGE_FAILED, s);
             }
         });
     }
 
     @ReactMethod
     public void markMessageAsRead(final int index, final boolean read, final Promise promise) {
-        if (_messages == null) {
-            promise.reject(ACCENGAGE, "There's no messages to mark");
+        if (_inbox == null) {
+            promise.reject(ERROR_GENERAL, "Inbox doesn't exist anymore");
             return;
         }
-        if (_inbox == null) {
-            promise.reject(ACCENGAGE, "There's no inbox to update");
+        if (_messages == null) {
+            promise.reject(ERROR_GENERAL, "Messages disappeared");
             return;
         }
 
         Message message = _messages.get(index);
 
         if (message == null) {
-            promise.reject(ACCENGAGE, "Couldn't find the message to mark");
+            promise.reject(ERROR_GENERAL, "Couldn't find the message to mark");
             return;
         }
 
@@ -340,19 +336,19 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void markMessageAsArchived(final int index, final boolean archived, final Promise promise) {
-        if (_messages == null) {
-            promise.reject(ACCENGAGE, "There's no messages to mark");
+        if (_inbox == null) {
+            promise.reject(ERROR_GENERAL, "Inbox doesn't exist anymore");
             return;
         }
-        if (_inbox == null) {
-            promise.reject(ACCENGAGE, "There's no inbox to update");
+        if (_messages == null) {
+            promise.reject(ERROR_GENERAL, "Messages disappeared");
             return;
         }
 
         Message message = _messages.get(index);
 
         if (message == null) {
-            promise.reject(ACCENGAGE, "Couldn't find the message to mark");
+            promise.reject(ERROR_GENERAL, "Couldn't find the message to mark");
             return;
         }
 
