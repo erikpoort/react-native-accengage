@@ -31,8 +31,8 @@ import java.util.Map;
 class RNAccengageModule extends ReactContextBaseJavaModule {
     private static final String ACCENGAGE = "RNAccengageModule";
 
-    private static final String ERROR_LOADING_INBOX_FAILED = "loading_inbox_failed";
-    private static final String ERROR_LOADING_MESSAGE_FAILED = "loading_message_failed";
+    private static final String ERROR_LOADING_INBOX = "loading_inbox_failed";
+    private static final String ERROR_LOADING_MESSAGE = "loading_message_failed";
     private static final String ERROR_ALREADY_LOADING = "already_loading";
     private static final String ERROR_GENERAL = "general_error";
 
@@ -132,7 +132,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
                 }
 
                 @Override public void onError(int i, String s) {
-                    promise.reject(ERROR_LOADING_INBOX_FAILED, s);
+                    promise.reject(ERROR_LOADING_INBOX, s);
                 }
             });
         } else {
@@ -305,7 +305,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
             }
 
             @Override public void onError(int failedMessageIndex, String s) {
-                promise.reject(ERROR_LOADING_MESSAGE_FAILED, s);
+                promise.reject(ERROR_LOADING_MESSAGE, s);
             }
         });
     }
