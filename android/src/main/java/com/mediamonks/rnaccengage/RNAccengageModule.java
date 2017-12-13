@@ -110,13 +110,13 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
     // TODO Sync errors with iOS version
 
     private Inbox _inbox;
-    private SparseArray<Message> _messages; // TODO primitives
-    private SparseArray<MessageResult> _loadedMessages; // TODO primitives
+    private SparseArray<Message> _messages;
+    private SparseArray<MessageResult> _loadedMessages;
     private int _numLoadedMessages;
 
     @ReactMethod
     public void getInboxMessages(final Promise promise) {
-        getInboxMessagesPaginated(0, 10, promise);
+        getInboxMessagesPaginated(0, 20, promise);
     }
 
     @ReactMethod
