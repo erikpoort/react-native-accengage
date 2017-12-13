@@ -298,6 +298,10 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
             promise.reject(ERROR_ALREADY_LOADING, "Messages are already being loaded");
             return;
         }
+        if (index < 0 || index >= _inbox.countMessages()) {
+            promise.reject(ERROR_LOADING_MESSAGE, "Requested index is out of bounds");
+            return;
+        }
 
         // If the message was lost or never loaded, re-load it.
         _inbox.getMessage(index, new A4S.MessageCallback() {
