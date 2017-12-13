@@ -71,48 +71,45 @@ function updateDeviceInfo(object) {
  * Get Inbox Messages
  * @param callback returns an inbox messages list
  */
- function getInboxMessages(){
-
+function getInboxMessages() {
   return RNAccengageModule.getInboxMessages();
- }
+}
 
- /**
- * Get Inbox Message List
- * @param page index
- * @param limit
- * @return Promise with an Accengage Inbox Message or error
- */
- function getInboxMessagesWithPageIndex(pageIndex,limit){
-  return RNAccengageModule.getInboxMessagesWithPageIndex(pageIndex,limit);
- }
-
- /**
- * Get Inbox Messages
- * @param index
- * @return Promise with an Accengage Inbox Message or error
- */
- function getMessage(index){
+/**
+* Get Inbox Messages
+* @param index
+* @return Promise with an Accengage Inbox Message or error
+*/
+function getMessage(index) {
   return RNAccengageModule.getMessageAtIndex(index);
- }
+}
 
- /**
- * Mark Message as Read
- * @param isRead
- * @return Promise with an Accengage Inbox Message or error
+/**
+* Mark Message as Read
+* @param index
+* @param isRead
+* @return Promise with an Accengage Inbox Message or error
+*/
+function markMessageAsRead(index, isRead) {
+  return RNAccengageModule.markMessageAsRead(index, isRead);
+}
+
+/**
+* Mark Message as Archived
+* @param index
+* @param isArchived
+* @return Promise with an Accengage Inbox Message or error
+*/
+function markMessageAsArchived(index, isArchived) {
+  return RNAccengageModule.markMessageAsArchived(index, isArchived);
+}
+
+/**
+ * Clear the message cache
  */
- function markMessageAsRead(isRead){
-  return RNAccengageModule.markMessageAsRead(isRead);
- }
-
- /**
- * Mark Message as Archived
- * @param isArchived
- * @return Promise with an Accengage Inbox Message or error
- */
- function markMessageAsArchived(isArchived){
-  return RNAccengageModule.markMessageAsArchived(isArchived);
- }
-
+function clearMessages() {
+  RNAccengageModule.clearMessages();
+}
 
 module.exports = {
   hasPermissions,
@@ -123,8 +120,8 @@ module.exports = {
   trackLead,
   updateDeviceInfo,
   getInboxMessages,
-  getInboxMessagesWithPageIndex,
   getMessage,
   markMessageAsRead,
-  markMessageAsArchived
+  markMessageAsArchived,
+  clearMessages,
 }

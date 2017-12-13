@@ -20,9 +20,7 @@ import com.facebook.react.bridge.WritableMap;
 
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -113,7 +111,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
 
     private Inbox _inbox;
     private SparseArray<Message> _messages; // TODO primitives
-    private SparseArray<Message> _loadedMessages; // TODO primitives
+    private SparseArray<MessageResult> _loadedMessages; // TODO primitives
     private int _numLoadedMessages;
 
     @ReactMethod
@@ -167,7 +165,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
 
             Message cachedMessage = _messages.get(currentIndex);
             if (cachedMessage != null) {
-                _loadedMessages.put(currentIndex, cachedMessage);
+                _loadedMessages.put(currentIndex, new MessageResult(currentIndex, cachedMessage));
                 _numLoadedMessages--;
 
                 resolvePromiseIfReady(pageIndex, limit, promise);
@@ -184,7 +182,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
                         }
                     }
 
-                    _loadedMessages.put(loadedMessageIndex, message);
+                    _loadedMessages.put(loadedMessageIndex, new MessageResult(loadedMessageIndex, message));
                     _numLoadedMessages--;
 
                     resolvePromiseIfReady(pageIndex, limit, promise);
@@ -199,6 +197,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
                         }
                     }
 
+                    _loadedMessages.put(failedMessageIndex, new MessageResult(failedMessageIndex, s));
                     _numLoadedMessages--;
 
                     resolvePromiseIfReady(pageIndex, limit, promise);
@@ -222,25 +221,37 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
 
             for (int i = 0; i < leni; ++i) {
                 int currentIndex = startIndex + i;
-                Message loadedMessage = _loadedMessages.get(currentIndex);
+                MessageResult messageResult = _loadedMessages.get(currentIndex);
+
+                if (messageResult == null) {
+                    if (promise != null) {
+                        promise.reject(ACCENGAGE, "Something went wrong.");
+                    }
+                    return;
+                }
+
+                Message loadedMessage = messageResult.getMessage();
 
                 if (loadedMessage != null) {
                     // Merge to cache
                     _messages.put(currentIndex, loadedMessage);
 
                     // Handle for callback
-                    messageList.pushMap(transformMessageToMap(loadedMessage, true));
+                    messageList.pushMap(transformMessageToMap(currentIndex, loadedMessage, true));
+                } else {
+                    WritableMap map = Arguments.createMap();
+                    map.putString("type", "message");
+                    map.putInt("index", messageResult.getIndex());
+                    map.putString("error", messageResult.getError());
+                    messageList.pushMap(map);
                 }
-                // else {
-                //      TODO unloaded / failed messages
-                // }
             }
 
             promise.resolve(messageList);
         }
     }
 
-    private WritableMap transformMessageToMap(Message message, boolean limitBody) {
+    private WritableMap transformMessageToMap(int index, Message message, boolean limitBody) {
         WritableMap map = Arguments.createMap();
 
         String body = message.getBody();
@@ -254,6 +265,8 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         }
         WritableMap customParameters = Arguments.fromBundle(bundle);
 
+        map.putString("type", "message");
+        map.putInt("index", index);
         map.putString("title", message.getTitle());
         map.putString("body", body);
         map.putDouble("timestamp", message.getSendDate().getTime());
@@ -267,10 +280,10 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void getMessage(final int index, final Promise promise) {
+    public void getMessageAtIndex(final int index, final Promise promise) {
         // See if we have a cached message for that index and return it if so.
         if (_messages != null && _messages.get(index) != null) {
-            promise.resolve(transformMessageToMap(_messages.get(index), false));
+            promise.resolve(transformMessageToMap(index, _messages.get(index), false));
             return;
         }
 
@@ -292,7 +305,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         _inbox.getMessage(index, new A4S.MessageCallback() {
             @Override public void onResult(Message message, int loadedMessageIndex) {
                 _messages.put(loadedMessageIndex, message);
-                promise.resolve(transformMessageToMap(message, false));
+                promise.resolve(transformMessageToMap(loadedMessageIndex, message, false));
             }
 
             @Override public void onError(int failedMessageIndex, String s) {
@@ -320,8 +333,9 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         }
 
         message.setRead(read);
-
         A4S.get(getReactApplicationContext()).updateMessages(_inbox);
+
+        promise.resolve(transformMessageToMap(index, message, false));
     }
 
     @ReactMethod
@@ -343,8 +357,9 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         }
 
         message.setArchived(archived);
-
         A4S.get(getReactApplicationContext()).updateMessages(_inbox);
+
+        promise.resolve(transformMessageToMap(index, message, false));
     }
 
     @ReactMethod
@@ -352,5 +367,35 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         _messages = null;
         _loadedMessages = null;
         _inbox = null;
+    }
+
+    private class MessageResult {
+
+        private final int _index;
+
+        private Message _message;
+        private String _error;
+
+        MessageResult(int index, Message message) {
+            _index = index;
+            _message = message;
+        }
+
+        MessageResult(int index, String error) {
+            _index = index;
+            _error = error;
+        }
+
+        int getIndex() {
+            return _index;
+        }
+
+        Message getMessage() {
+            return _message;
+        }
+
+        String getError() {
+            return _error;
+        }
     }
 }
