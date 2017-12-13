@@ -25,17 +25,17 @@ RCT_EXPORT_MODULE();
 #pragma mark - Permissions
 
 RCT_EXPORT_METHOD(
-                  hasPermissions:(RCTResponseSenderBlock)callback
+                  hasPermissions:(RCTResponseSenderBlock)promise
                   ) {
     UNUserNotificationCenter *notificationCenter = [UNUserNotificationCenter currentNotificationCenter];
     if (notificationCenter) {
         [notificationCenter getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings *settings)
          {
-             callback(@[@(settings.authorizationStatus == UNAuthorizationStatusAuthorized)]);
+             promise(@[@(settings.authorizationStatus == UNAuthorizationStatusAuthorized)]);
          }];
     } else {
         BOOL hasPermissions = [[UIApplication sharedApplication] isRegisteredForRemoteNotifications];
-        callback(@[@(hasPermissions)]);
+        promise(@[@(hasPermissions)]);
     }
 }
 
@@ -71,7 +71,7 @@ RCT_EXPORT_METHOD(
                   trackEventWithCustomData:(NSUInteger)key
                   customData:(NSDictionary *)customData
                   ) {
-    if (!customData) {
+    if (!customData ||[customData count] == 0) {
         [Accengage trackEvent:key];
         return;
     }
@@ -90,19 +90,19 @@ RCT_EXPORT_METHOD(
 }
 
 RCT_EXPORT_METHOD(
-                  trackLead:(NSString *)label
-                  value:(NSString *)value
+                  trackLead:(NSString *)leadLabel
+                  value:(NSString *)leadValue
                   ) {
-    if (!label || [label isEqualToString:@""]) {
+    if (!leadLabel || [leadLabel isEqualToString:@""]) {
         NSLog(@"%@: No label was supplied", kRejectCode);
         return;
     }
-    if (!value || [value isEqualToString:@""]) {
+    if (!leadValue || [leadValue isEqualToString:@""]) {
         NSLog(@"%@: No value was supplied", kRejectCode);
         return;
     }
     
-    [Accengage trackLead:label value:value];
+    [Accengage trackLead:leadLabel value:leadValue];
 }
 
 #pragma mark - Get Inbox Messages
@@ -110,11 +110,11 @@ RCT_EXPORT_METHOD(
 //@success RCTPromiseResolveBlock
 //@failure BMA4SInBoxLoadingResult
 RCT_EXPORT_METHOD(
-                  getInboxMessages:(RCTPromiseResolveBlock)callback
+                  getInboxMessages:(RCTPromiseResolveBlock)promise
                   rejecter:(RCTPromiseRejectBlock)reject
                   ){
     [self getInboxMessagesWithPageIndex:0 limit:20 successCallback:^(NSArray *response) {
-        callback(response);
+        promise(response);
     } rejecter:^(NSString *code, NSString *message, NSError *error) {
         reject(code,message,error);
     }];
@@ -129,7 +129,7 @@ RCT_EXPORT_METHOD(
 RCT_EXPORT_METHOD(
                   getInboxMessagesWithPageIndex:(int)pageIndex
                   limit:(int)limit
-                  successCallback:(RCTPromiseResolveBlock)callback
+                  successCallback:(RCTPromiseResolveBlock)promise
                   rejecter:(RCTPromiseRejectBlock)reject
                   ){
     
@@ -138,7 +138,7 @@ RCT_EXPORT_METHOD(
         _inbox = inbox;
         //Get Accengage Messsages From Index with limit
         [self getMessagesFromIndex:pageIndex limit:limit messageListCallback:^(NSArray *response) {
-            callback(response);
+            promise(response);
         } rejecter:^(NSString *code, NSString *message, NSError *error) {
             reject(code,message,error);
         }];
@@ -287,7 +287,7 @@ RCT_EXPORT_METHOD(
 RCT_EXPORT_METHOD(
                   resolvePromiseIfReadyWithPageIndex:(int)pageIndex
                   limit:(int)limit
-                  messageCallback:(RCTPromiseResolveBlock)callback
+                  messageCallback:(RCTPromiseResolveBlock)promise
                   rejecter:(RCTPromiseRejectBlock)reject
                   ){
     if(_numLoadedMessages == 0)
@@ -315,8 +315,8 @@ RCT_EXPORT_METHOD(
                 [messageList addObject:errorMessageData];
             }
         }
-        
-        callback(messageList);
+
+        promise(messageList);
     }
 }
 
@@ -350,8 +350,8 @@ RCT_EXPORT_METHOD(
 }
 
 RCT_EXPORT_METHOD(
-                  getInboxMessageAtIndex:(int)index
-                  messageCallback:(RCTPromiseResolveBlock)callback
+                  getMessageAtIndex:(int)index
+                  messageCallback:(RCTPromiseResolveBlock)promise
                   rejecter:(RCTPromiseRejectBlock)reject
                   ){
     //
@@ -362,7 +362,7 @@ RCT_EXPORT_METHOD(
         NSUInteger nsi = (NSUInteger) index;
         
         [_inbox obtainMessageAtIndex:nsi loaded:^(BMA4SInBoxMessage *message, NSUInteger requestedIndex) {
-            callback(@[message]);
+            promise(@[message]);
         } onError:^(NSUInteger requestedIndex) {
             NSString *errorMessage = @"the call to obtain message at index ";
             NSString *operationCode = [NSString stringWithFormat:@"%@",@(AccengageCallResultError)];
@@ -378,8 +378,8 @@ RCT_EXPORT_METHOD(
 //Mark as read Accengage message
 RCT_EXPORT_METHOD(
                   markMessageAsRead:(int)index
-                  Read:(bool)isRead
-                  callback:(RCTPromiseResolveBlock)callback
+                  Read:(bool)read
+                  callback:(RCTPromiseResolveBlock)promise
                   rejecter:(RCTPromiseRejectBlock)reject
                   ){
     if(_messages == nil)
@@ -411,8 +411,8 @@ RCT_EXPORT_METHOD(
 //Mark as Archive Accengage message
 RCT_EXPORT_METHOD(
                   markMessageAsArchived:(int)index
-                  Read:(bool)isRead
-                  callback:(RCTPromiseResolveBlock)callback
+                  Read:(bool)archived
+                  callback:(RCTPromiseResolveBlock)promise
                   rejecter:(RCTPromiseRejectBlock)reject
                   ){
     if(_messages == nil)
@@ -444,14 +444,24 @@ RCT_EXPORT_METHOD(
 #pragma mark - Device info
 
 RCT_EXPORT_METHOD(
-                  updateDeviceInfo:(NSDictionary *)fields
+                  updateDeviceInfo:(NSDictionary *)object
                   ) {
-    if (!fields || fields.count == 0) {
+    if (!object || object.count == 0) {
         NSLog(@"No fields were added");
         return;
     }
     
-    [Accengage updateDeviceInfo:fields];
+    [Accengage updateDeviceInfo:object];
+}
+
+#pragma mark - Clear Messages
+
+RCT_EXPORT_METHOD(
+        clearMessages
+                ) {
+    _messages = nil;
+    _loadedMessages = nil;
+    _inbox = nil;
 }
 
 @end
