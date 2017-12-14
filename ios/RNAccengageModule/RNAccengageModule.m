@@ -364,8 +364,13 @@ RCT_EXPORT_METHOD(
         return;
     }
 
-    [message markAsRead];
-    NSDictionary *messageData = [self getMessageDictionary:message withLimitBody:true];
+    if (read) {
+        [message markAsRead];
+    } else {
+        [message markAsUnread];
+    }
+
+    NSDictionary *messageData = [self getMessageDictionary:message withLimitBody:NO];
     promise(messageData);
 }
 
@@ -386,7 +391,6 @@ RCT_EXPORT_METHOD(
         return;
     }
 
-
     BMA4SInBoxMessage *message = _messages[index];
 
     if (message == nil) {
@@ -394,8 +398,13 @@ RCT_EXPORT_METHOD(
         return;
     }
 
-    [message archive];
-    NSDictionary *messageData = [self getMessageDictionary:message withLimitBody:true];
+    if (archived) {
+        [message archive];
+    } else {
+        [message unarchive];
+    }
+
+    NSDictionary *messageData = [self getMessageDictionary:message withLimitBody:NO];
     promise(messageData);
 }
 
