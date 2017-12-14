@@ -371,7 +371,7 @@ RCT_EXPORT_METHOD(
 
 RCT_EXPORT_METHOD(
             markMessageAsArchived:(NSUInteger) index
-            Read:(BOOL) archived
+            archived:(BOOL) archived
             callback:(RCTPromiseResolveBlock) promise
             rejecter:(RCTPromiseRejectBlock) reject
 ) {
