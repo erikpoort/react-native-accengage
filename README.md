@@ -119,7 +119,7 @@ Accengage.markMessageAsRead(index, bool);
 ##Message Format
 When a message was succefully retrieved, it will have the following structure:
 
-```json
+```
 {
   type: "message",
   index: Integer,
@@ -137,7 +137,7 @@ When a message was succefully retrieved, it will have the following structure:
 Due too the way the Accengage SDK is setup, you need to do seperate message detail calls to be 
 able to fill a list. As some of those can fail, the list can contain messages of the following 
 structure as well. In which case you can show a row with a retry button for example.
-```json
+```
 {
   type: "error",
   index: Integer
