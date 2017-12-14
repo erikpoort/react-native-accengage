@@ -73,7 +73,7 @@ Accengage.trackEventWithCustomData(key, customData);
  * @param label
  * @param value
  */
-Accengage.trackLead(label, value);
+Accengage.trackLead(labelLabel, leadValue);
 
 /**
 * Update device info
@@ -82,4 +82,58 @@ Accengage.trackLead(label, value);
 * @param object
 */
 Accengage.updateDeviceInfo(object);
+
+/**
+* Get Inbox Messages
+* Returns an array of Messages.
+* @param object
+*/
+Accengage.getInboxMessages();
+
+/**
+* Get Message
+* Returns a single message given an index.
+* Before calling this method, getInboxMessages() should be invocated.
+* @param index
+*/
+Accengage.getMessage(index);
+
+/**
+* Mark Message As Archived
+* Archive a message. Returns the message with the new value.
+* Before calling this method, getInboxMessages() should be invocated.
+* @param index
+* @param bool
+*/
+Accengage.markMessageAsArchived(index, bool);
+
+/**
+* Mark Message As Read
+* Read a message. Returns the message with the new value.
+* Before calling this method, getInboxMessages() should be invocated.
+* @param index
+* @param bool
+*/
+Accengage.markMessageAsRead(index, bool);
+
+##Message Format
+{
+  category: String,
+  sender: String,
+  read: Boolean,
+  title: String,
+  archived: Boolean,
+  customParameters: Object,
+  body: String,
+  timestamp: Timestamp/null
+}
+
+##Error Handling
+* Inbox loading result has been Cancelled
+* Inbox loading result has been Failed
+* There's already messages being loaded
+* Inbox doesn't exist
+* There's no messages. You need to first call getInboxMessages method.
+* Message doesn't exist
+
 ```
