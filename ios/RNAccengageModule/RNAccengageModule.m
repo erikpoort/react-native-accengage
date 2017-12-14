@@ -22,7 +22,7 @@ static NSString *const ERROR_GENERAL = @"general_error";
 	BMA4SInBox *_inbox;
 	NSMutableArray *_messages;
 	NSMutableArray *_loadedMessages;
-	int _numLoadedMessages;
+	NSUInteger _numLoadedMessages;
 }
 
 RCT_EXPORT_MODULE();
@@ -132,8 +132,8 @@ RCT_EXPORT_METHOD(
 //@success RCTPromiseResolveBlock
 //@failure BMA4SInBoxLoadingResult
 RCT_EXPORT_METHOD(
-                  getInboxMessagesWithPageIndex:(int)pageIndex
-                  limit:(int)limit
+                  getInboxMessagesWithPageIndex:(NSUInteger)pageIndex
+                  limit:(NSUInteger)limit
                   successCallback:(RCTPromiseResolveBlock)promise
                   rejecter:(RCTPromiseRejectBlock)reject
                   ){
@@ -178,7 +178,7 @@ RCT_EXPORT_METHOD(
 //@success RCTPromiseResolveBlock
 //@failure BMA4SInBoxLoadingResult
 //
-- (void)getMessagesFromIndex:(int)pageIndex limit:(int)limit messageListCallback:(RCTPromiseResolveBlock)callback rejecter:(RCTPromiseRejectBlock)reject
+- (void)getMessagesFromIndex:(NSUInteger)pageIndex limit:(NSUInteger)limit messageListCallback:(RCTPromiseResolveBlock)callback rejecter:(RCTPromiseRejectBlock)reject
 {
     if(_loadedMessages != nil)
     {
@@ -197,15 +197,15 @@ RCT_EXPORT_METHOD(
         _messages = [NSMutableArray new];
     }
 
-    int startIndex = pageIndex * limit;
-    int leni  = MIN((int)_inbox.size, limit);
+    NSUInteger startIndex = pageIndex * limit;
+    NSUInteger leni  = MIN(_inbox.size, limit);
 
     _loadedMessages = [NSMutableArray new];
     _numLoadedMessages = leni;
 
-    for (int i =  0; i < leni; i++)
+    for (NSUInteger i =  0; i < leni; i++)
     {
-        int currentIndex = startIndex + i;
+        NSUInteger currentIndex = startIndex + i;
 
         //In order to avoid index out of bounds, we check that our messages array has, at least, the value we're looking for.
         if(_messages.count >= currentIndex + 1){
@@ -262,21 +262,21 @@ RCT_EXPORT_METHOD(
 }
 
 RCT_EXPORT_METHOD(
-                  resolvePromiseIfReadyWithPageIndex:(int)pageIndex
-                  limit:(int)limit
+                  resolvePromiseIfReadyWithPageIndex:(NSUInteger)pageIndex
+                  limit:(NSUInteger)limit
                   messageCallback:(RCTPromiseResolveBlock)promise
                   rejecter:(RCTPromiseRejectBlock)reject
                   ){
     if(_numLoadedMessages == 0)
     {
-        int startIndex = pageIndex * limit;
-        int leni = MIN((int)_inbox.size, startIndex + limit);
+        NSUInteger startIndex = pageIndex * limit;
+        NSUInteger leni = MIN(_inbox.size, startIndex + limit);
         
         NSMutableArray *messageList = [NSMutableArray new];
         
-        for(int i = 0;i < leni;i++)
+        for(NSUInteger i = 0;i < leni;i++)
         {
-            int currentIndex = startIndex + i;
+            NSUInteger currentIndex = startIndex + i;
             
             BMA4SInBoxMessage *loadedMessage = _loadedMessages[currentIndex];
             if([loadedMessage isKindOfClass:[BMA4SInBoxMessage classForCoder]])
@@ -330,7 +330,7 @@ RCT_EXPORT_METHOD(
 }
 
 RCT_EXPORT_METHOD(
-                  getMessageAtIndex:(int)index
+                  getMessageAtIndex:(NSUInteger)index
                   messageCallback:(RCTPromiseResolveBlock)promise
                   rejecter:(RCTPromiseRejectBlock)reject
                   ){
@@ -375,7 +375,7 @@ RCT_EXPORT_METHOD(
 
 //Mark as read Accengage message
 RCT_EXPORT_METHOD(
-                  markMessageAsRead:(int)index
+                  markMessageAsRead:(NSUInteger)index
                   Read:(BOOL)read
                   callback:(RCTPromiseResolveBlock)promise
                   rejecter:(RCTPromiseRejectBlock)reject
@@ -409,7 +409,7 @@ RCT_EXPORT_METHOD(
 
 //Mark as Archive Accengage message
 RCT_EXPORT_METHOD(
-                  markMessageAsArchived:(int)index
+                  markMessageAsArchived:(NSUInteger)index
                   Read:(BOOL)archived
                   callback:(RCTPromiseResolveBlock)promise
                   rejecter:(RCTPromiseRejectBlock)reject
