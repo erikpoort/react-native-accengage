@@ -211,7 +211,6 @@ RCT_EXPORT_METHOD(
             _loadedMessages[requestedIndex] = message;
             _numLoadedMessages--;
 
-
             [self resolvePromiseIfReadyWithPageIndex:pageIndex limit:limit messageCallback:callback rejecter:^(NSString *code, NSString *rejectMessage, NSError *error) {
                 reject(code, rejectMessage, error);
             }];
@@ -273,13 +272,12 @@ RCT_EXPORT_METHOD(
     }
 }
 
-- (NSDictionary *)getMessageDictionary:(BMA4SInBoxMessage *)message withLimitBody:(bool)isLimitBody {
+- (NSDictionary *)getMessageDictionary:(BMA4SInBoxMessage *)message withLimitBody:(BOOL)isLimitBody {
     NSString *text = message.text;
 
     if (isLimitBody && message.text.length > 140) {
         text = [text substringToIndex:140];
     }
-
 
     //Create Message Dictionary
     NSDictionary *messageData = @{@"title": message.title,
@@ -303,7 +301,7 @@ RCT_EXPORT_METHOD(
     //See if we have a cached message for that index and return it if so
     if (_messages != nil && _messages.count >= index) {
         if (_messages[index] != nil) {
-            NSDictionary *messageData = [self getMessageDictionary:_messages[index] withLimitBody:true];
+            NSDictionary *messageData = [self getMessageDictionary:_messages[index] withLimitBody:YES];
             promise(messageData);
             return;
         }
@@ -331,7 +329,7 @@ RCT_EXPORT_METHOD(
 
     NSUInteger nsi = (NSUInteger) index;
     [_inbox obtainMessageAtIndex:nsi loaded:^(BMA4SInBoxMessage *message, NSUInteger requestedIndex) {
-        NSDictionary *messageData = [self getMessageDictionary:message withLimitBody:true];
+        NSDictionary *messageData = [self getMessageDictionary:message withLimitBody:YES];
         promise(messageData);
     }                    onError:^(NSUInteger requestedIndex) {
         NSString *errorMessage = [NSString stringWithFormat:@"Error loading message with index %i", requestedIndex];
