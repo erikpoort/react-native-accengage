@@ -116,7 +116,7 @@ Accengage.markMessageAsArchived(index, bool);
 Accengage.markMessageAsRead(index, bool);
 ```
 
-##Message Format
+## Message Format
 When a message was succefully retrieved, it will have the following structure:
 
 ```
@@ -144,7 +144,7 @@ structure as well. In which case you can show a row with a retry button for exam
 }
 ```
 
-##Error Handling
+## Error Handling
 When an inbox call fails, it will reject a promise. These are the codes you can handle: 
 
 `loading_inbox_failed`
