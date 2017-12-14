@@ -158,6 +158,7 @@ RCT_EXPORT_METHOD(
 //
 - (void)getAccengageInboxWithSuccess:(void (^)(BMA4SInBox *inbox))success failure:(void (^)(BMA4SInBoxLoadingResult result))failure
 {
+
     [BMA4SInBox obtainMessagesWithCompletionHandler:^(BMA4SInBoxLoadingResult result, BMA4SInBox *inbox) {
         if(result != BMA4SInBoxLoadingResultLoaded)
         {
@@ -181,66 +182,84 @@ RCT_EXPORT_METHOD(
         NSString *errorMessage = [NSString stringWithFormat:@"There's already messages being loaded"];
         NSString *operationCode = [NSString stringWithFormat:@"%@",@(AccengageCallIsLoading)];
         reject(operationCode,errorMessage,nil);
+        return;
+    }
+
+    if(_inbox == nil)
+    {
+        NSString *errorMessage = [NSString stringWithFormat:@"Inbox was null"];
+        NSString *operationCode = [NSString stringWithFormat:@"%@",@(AccengageCallIsLoading)];
+        reject(operationCode,errorMessage,nil);
+        return;
     }
     
     if(_messages == nil)
     {
         _messages = [NSMutableArray new];
     }
-    
-    if(_numLoadedMessages < _inbox.size)
+
+
+    int startIndex = pageIndex * limit;
+    int leni  = MIN((int)_inbox.size, limit);
+
+    _loadedMessages = [NSMutableArray new];
+    _numLoadedMessages = leni;
+
+    for (int i =  0; i < leni; i++)
     {
-        int startIndex = pageIndex * limit;
-        int leni  = MIN((int)_inbox.size, limit);
-        
-        _loadedMessages = [NSMutableArray new];
-        _numLoadedMessages = leni;
-        
-        for (int i =  0; i < limit; i++)
-        {
-            int currentIndex = startIndex + i;
-            //Add null object to be replaced with the async callback
-            
-            BMA4SInBoxMessage* cachedMessage = [_messages objectAtIndex:i];
-            
-            if(cachedMessage != nil)
-            {
-                [_loadedMessages setObject:cachedMessage atIndexedSubscript:i];
-                
+        int currentIndex = startIndex + i;
+
+        //In order to avoid index out of bounds, we check that our messages array has, at least, the value we're looking for.
+        if(_messages.count >= currentIndex + 1){
+            if([_messages objectAtIndex:currentIndex] != nil){
+                BMA4SInBoxMessage* cachedMessage = [_messages objectAtIndex:currentIndex];
+                [_loadedMessages setObject:cachedMessage atIndexedSubscript:currentIndex];
+
                 //Increase the number of loaded messages
-                _numLoadedMessages ++;
+                _numLoadedMessages --;
+
+                [self resolvePromiseIfReadyWithPageIndex:pageIndex limit:limit messageCallback:callback rejecter:^(NSString *code, NSString *message, NSError *error) {
+                    reject(code, message, error);
+                }];
+
+                return;
             }
-            
-            [_inbox obtainMessageAtIndex:currentIndex loaded:^(BMA4SInBoxMessage *message, NSUInteger requestedIndex) {
-                [_loadedMessages setObject:message atIndexedSubscript:requestedIndex];
-                
-                [self resolvePromiseIfReadyWithPageIndex:pageIndex limit:limit messageCallback:^(NSArray *response) {
-                    
-                } rejecter:^(NSString *code, NSString *message, NSError *error) {
-                    reject(code,message,error);
-                }];
-            } onError:^(NSUInteger requestedIndex) {
-                
-                //remove number of loaded messages when the service call had failed
-                _numLoadedMessages--;
-                
-                [self resolvePromiseIfReadyWithPageIndex:pageIndex limit:limit messageCallback:^(NSArray *response) {
-                    callback(response);
-                } rejecter:^(NSString *code, NSString *message, NSError *error) {
-                    reject(code,message,error);
-                }];
-            }];
         }
-        
-    }else{
-        //PRAGMA MARK: Uncomment after delete the warning below this callback
-        //        callback(@[]);
-        
-#pragma WARNING remove when there is Accengage Inbox Messages data
-        
-        NSMutableArray *dummyMessages = [self createMessagesDummyWithLimit:limit];
-        callback(@[dummyMessages]);
-        
+
+        [_inbox obtainMessageAtIndex:currentIndex loaded:^(BMA4SInBoxMessage *message, NSUInteger requestedIndex) {
+            if(_inbox == nil)
+            {
+                return;
+            }
+
+            [_loadedMessages setObject:message atIndexedSubscript:requestedIndex];
+            _numLoadedMessages --;
+
+
+            [self resolvePromiseIfReadyWithPageIndex:pageIndex limit:limit messageCallback:callback rejecter:^(NSString *code, NSString *message, NSError *error) {
+                reject(code, message, error);
+            }];
+        } onError:^(NSUInteger requestedIndex) {
+            if(_inbox == nil)
+            {
+                return;
+            }
+
+            //remove number of loaded messages when the service call had failed
+            [_loadedMessages setObject:@"" atIndexedSubscript:requestedIndex]; //change @"" to String
+            _numLoadedMessages--;
+
+            [self resolvePromiseIfReadyWithPageIndex:pageIndex limit:limit messageCallback:callback rejecter:^(NSString *code, NSString *message, NSError *error) {
+                reject(code, message, error);
+            }];
+
+        }];
+    }
+
+    if(leni == 0){
+        [self resolvePromiseIfReadyWithPageIndex:pageIndex limit:limit messageCallback:callback rejecter:^(NSString *code, NSString *message, NSError *error) {
+            reject(code, message, error);
+        }];
     }
 }
 
@@ -354,47 +373,66 @@ RCT_EXPORT_METHOD(
                   messageCallback:(RCTPromiseResolveBlock)promise
                   rejecter:(RCTPromiseRejectBlock)reject
                   ){
-    //
-    //Check if the Inbox message list exists
-    //
-    if(_inbox != nil)
-    {
-        NSUInteger nsi = (NSUInteger) index;
-        
-        [_inbox obtainMessageAtIndex:nsi loaded:^(BMA4SInBoxMessage *message, NSUInteger requestedIndex) {
-            promise(@[message]);
-        } onError:^(NSUInteger requestedIndex) {
-            NSString *errorMessage = @"the call to obtain message at index ";
-            NSString *operationCode = [NSString stringWithFormat:@"%@",@(AccengageCallResultError)];
-            reject(operationCode,errorMessage,nil);
-        }];
-    }else{
-        NSString *errorMessage = @"You need to call to getInboxMessage before call getInboxMessageAtIndex";
-        NSString *operationCode = [NSString stringWithFormat:@"%@",@(InboxMessageListNotExists)];
-        reject(operationCode,errorMessage,nil);
+    //See if we have a cached message for that index and return it if so
+    if(_messages != nil && _messages.count >= index){
+        if([_messages objectAtIndex:index] != nil){
+            NSDictionary *messageData = [self getMessageDictionary:[_messages objectAtIndex:index] withLimitBody:true];
+            promise(messageData);
+            return;
+        }
     }
+
+    if(_inbox == nil){
+        NSString *errorMessage = @"Inbox doesn't exists anymore. ";
+        NSString *operationCode = [NSString stringWithFormat:@"%@",@(InboxNotExists)];
+        reject(operationCode, errorMessage, nil);
+    }
+
+    if(_messages == nil){
+        NSString *errorMessage = @"Messages disappeared. ";
+        NSString *operationCode = [NSString stringWithFormat:@"%@",@(MessageNotExists)];
+        reject(operationCode, errorMessage, nil);
+    }
+
+    if(_loadedMessages == nil){
+        NSString *errorMessage = @"Messages are already being loaded. ";
+        NSString *operationCode = [NSString stringWithFormat:@"%@",@(AccengageCallIsLoading)];
+        reject(operationCode, errorMessage, nil);
+    }
+
+    NSUInteger nsi = (NSUInteger) index;
+    [_inbox obtainMessageAtIndex:nsi loaded:^(BMA4SInBoxMessage *message, NSUInteger requestedIndex) {
+        NSDictionary *messageData = [self getMessageDictionary:message withLimitBody:true];
+        promise(messageData);
+    } onError:^(NSUInteger requestedIndex) {
+        NSString *errorMessage = @"the call to obtain message at index ";
+        NSString *operationCode = [NSString stringWithFormat:@"%@",@(AccengageCallResultError)];
+        reject(operationCode,errorMessage,nil);
+    }];
 }
 
 //Mark as read Accengage message
 RCT_EXPORT_METHOD(
                   markMessageAsRead:(int)index
-                  Read:(bool)read
+                  Read:(BOOL)read
                   callback:(RCTPromiseResolveBlock)promise
                   rejecter:(RCTPromiseRejectBlock)reject
                   ){
-    if(_messages == nil)
-    {
-        NSString *errorMessage = @"There's no messages to mark";
-        NSString *operationCode = [NSString stringWithFormat:@"%@",@(InboxMessageListNotExists)];
-        reject(operationCode,errorMessage,nil);
-    }
-    
+
     if(_inbox == nil)
     {
         NSString *errorMessage = @"There's no inbox to update";
         NSString *operationCode = [NSString stringWithFormat:@"%@",@(InboxNotExists)];
         reject(operationCode,errorMessage,nil);
     }
+
+    if(_messages == nil)
+    {
+        NSString *errorMessage = @"There's no messages to mark";
+        NSString *operationCode = [NSString stringWithFormat:@"%@",@(InboxMessageListNotExists)];
+        reject(operationCode,errorMessage,nil);
+    }
+
     
     BMA4SInBoxMessage *message = [_messages objectAtIndex:index];
     
@@ -406,39 +444,45 @@ RCT_EXPORT_METHOD(
     }
     
     [message markAsRead];
+    NSDictionary *messageData = [self getMessageDictionary:message withLimitBody:true];
+    promise(messageData);
 }
 
 //Mark as Archive Accengage message
 RCT_EXPORT_METHOD(
                   markMessageAsArchived:(int)index
-                  Read:(bool)archived
+                  Read:(BOOL)archived
                   callback:(RCTPromiseResolveBlock)promise
                   rejecter:(RCTPromiseRejectBlock)reject
                   ){
-    if(_messages == nil)
-    {
-        NSString *errorMessage = @"There's no messages to mark";
-        NSString *operationCode = [NSString stringWithFormat:@"%@",@(InboxMessageListNotExists)];
-        reject(operationCode,errorMessage,nil);
-    }
-    
+
     if(_inbox == nil)
     {
         NSString *errorMessage = @"There's no inbox to update";
         NSString *operationCode = [NSString stringWithFormat:@"%@",@(InboxNotExists)];
         reject(operationCode,errorMessage,nil);
     }
-    
+
+    if(_messages == nil)
+    {
+        NSString *errorMessage = @"There's no messages to mark";
+        NSString *operationCode = [NSString stringWithFormat:@"%@",@(InboxMessageListNotExists)];
+        reject(operationCode,errorMessage,nil);
+    }
+
+
     BMA4SInBoxMessage *message = [_messages objectAtIndex:index];
-    
+
     if(message == nil)
     {
         NSString *errorMessage = @"Couldn't find the message to mark";
         NSString *operationCode = [NSString stringWithFormat:@"%@",@(MessageNotExists)];
         reject(operationCode,errorMessage,nil);
     }
-    
+
     [message archive];
+    NSDictionary *messageData = [self getMessageDictionary:message withLimitBody:true];
+    promise(messageData);
 }
 
 #pragma mark - Device info
