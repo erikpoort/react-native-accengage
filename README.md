@@ -28,8 +28,7 @@ Application.java.
 import Accengage from 'react-native-accengage';
 ```
 
-Right now hasPermissions, requestPermission, trackEvent, trackEventWithCustomData and trackLead are 
-implemented. 
+Implemented calls:
 ```js
 /**
  * Check if user has granted push permissions
@@ -85,7 +84,7 @@ Accengage.updateDeviceInfo(object);
 
 /**
 * Get Inbox Messages
-* Returns an array of Messages.
+* Returns an array of a maximum of 20 Messages.
 * @param object
 */
 Accengage.getInboxMessages();
@@ -115,9 +114,15 @@ Accengage.markMessageAsArchived(index, bool);
 * @param bool
 */
 Accengage.markMessageAsRead(index, bool);
+```
 
 ##Message Format
+When a message was succefully retrieved, it will have the following structure:
+
+```json
 {
+  type: "message",
+  index: Integer,
   category: String,
   sender: String,
   read: Boolean,
@@ -127,13 +132,35 @@ Accengage.markMessageAsRead(index, bool);
   body: String,
   timestamp: Timestamp/null
 }
+```
+
+Due too the way the Accengage SDK is setup, you need to do seperate message detail calls to be 
+able to fill a list. As some of those can fail, the list can contain messages of the following 
+structure as well. In which case you can show a row with a retry button for example.
+```json
+{
+  type: "error",
+  index: Integer
+}
+```
 
 ##Error Handling
-* Inbox loading result has been Cancelled
-* Inbox loading result has been Failed
-* There's already messages being loaded
-* Inbox doesn't exist
-* There's no messages. You need to first call getInboxMessages method.
-* Message doesn't exist
+When an inbox call fails, it will reject a promise. These are the codes you can handle: 
 
-```
+`loading_inbox_failed`
+When the very first call to Accengage fails
+
+`loading_message_failed`
+Only in case of retrieving a single message
+
+`already_loading`
+When you try to load a list, while a previous one was still loading
+
+`general_error`
+These are errors that shouldn't happen. Think of memory issues or async calls finishing after 
+cleanup.
+Examples:
+- Inbox was null
+- Inbox doesn't exist anymore
+- Messages disappeared
+- Couldn't find the message to mark read/archived
