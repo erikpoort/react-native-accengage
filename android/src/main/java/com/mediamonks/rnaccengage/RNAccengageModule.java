@@ -236,7 +236,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
                     messageList.pushMap(transformMessageToMap(currentIndex, loadedMessage, true));
                 } else {
                     WritableMap map = Arguments.createMap();
-                    map.putString("type", "message");
+                    map.putString("type", "error");
                     map.putInt("index", messageResult.getIndex());
                     map.putString("error", messageResult.getError());
                     messageList.pushMap(map);
