@@ -118,9 +118,6 @@ RCT_EXPORT_METHOD(
 
 #pragma mark - Get Inbox Messages
 
-//Get Message list with pagination
-//@success RCTPromiseResolveBlock
-//@failure BMA4SInBoxLoadingResult
 RCT_EXPORT_METHOD(
             getInboxMessages:(RCTPromiseResolveBlock) promise
             rejecter:(RCTPromiseRejectBlock) reject
@@ -132,19 +129,12 @@ RCT_EXPORT_METHOD(
     }];
 }
 
-
-//Get Message list
-//@params pageIndex
-//@params limit
-//@success RCTPromiseResolveBlock
-//@failure BMA4SInBoxLoadingResult
 RCT_EXPORT_METHOD(
             getInboxMessagesWithPageIndex:(NSUInteger) pageIndex
             limit:(NSUInteger) limit
             successCallback:(RCTPromiseResolveBlock) promise
             rejecter:(RCTPromiseRejectBlock) reject
 ) {
-
     //Get Accengage Inbox
     [self getAccengageInboxWithSuccess:^(BMA4SInBox *inbox) {
         _inbox = inbox;
@@ -162,11 +152,6 @@ RCT_EXPORT_METHOD(
     }];
 }
 
-
-//Get Accengage inbox
-//@success BMA4SInBox
-//@failure BMA4SInBoxLoadingResult
-//
 - (void)getAccengageInboxWithSuccess:(void (^)(BMA4SInBox *inbox))success failure:(void (^)(BMA4SInBoxLoadingResult result))failure {
     [BMA4SInBox obtainMessagesWithCompletionHandler:^(BMA4SInBoxLoadingResult result, BMA4SInBox *inbox) {
         if (result != BMA4SInBoxLoadingResultLoaded) {
@@ -177,12 +162,6 @@ RCT_EXPORT_METHOD(
     }];
 }
 
-//Get Message list
-//@params pageIndex
-//@params limit
-//@success RCTPromiseResolveBlock
-//@failure BMA4SInBoxLoadingResult
-//
 - (void)getMessagesFromIndex:(NSUInteger)pageIndex limit:(NSUInteger)limit messageListCallback:(RCTPromiseResolveBlock)callback rejecter:(RCTPromiseRejectBlock)reject {
     if (_loadedMessages != nil) {
         reject(ERROR_ALREADY_LOADING, @"There's already messages being loaded", nil);
@@ -360,7 +339,6 @@ RCT_EXPORT_METHOD(
     }];
 }
 
-//Mark as read Accengage message
 RCT_EXPORT_METHOD(
             markMessageAsRead:(NSUInteger) index
             read:(BOOL) read
@@ -391,7 +369,6 @@ RCT_EXPORT_METHOD(
     promise(messageData);
 }
 
-//Mark as Archive Accengage message
 RCT_EXPORT_METHOD(
             markMessageAsArchived:(NSUInteger) index
             Read:(BOOL) archived
