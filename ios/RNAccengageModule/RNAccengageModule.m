@@ -234,8 +234,8 @@ RCT_EXPORT_METHOD(
             _numLoadedMessages --;
 
 
-            [self resolvePromiseIfReadyWithPageIndex:pageIndex limit:limit messageCallback:callback rejecter:^(NSString *code, NSString *message, NSError *error) {
-                reject(code, message, error);
+            [self resolvePromiseIfReadyWithPageIndex:pageIndex limit:limit messageCallback:callback rejecter:^(NSString *code, NSString *rejectMessage, NSError *error) {
+                reject(code, rejectMessage, error);
             }];
         } onError:^(NSUInteger requestedIndex) {
             if(_inbox == nil)
