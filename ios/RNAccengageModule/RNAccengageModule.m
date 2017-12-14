@@ -256,7 +256,7 @@ RCT_EXPORT_METHOD(
             if ([loadedMessage isKindOfClass:[BMA4SInBoxMessage classForCoder]]) {
 
                 _messages[currentIndex] = loadedMessage;
-                NSDictionary *messageData = [self getMessageDictionary:loadedMessage withLimitBody:true];
+                NSDictionary *messageData = [self getMessageDictionary:currentIndex message:loadedMessage withLimitBody:true];
                 [messageList addObject:messageData];
             } else {
                 //if get message call failed
@@ -272,7 +272,7 @@ RCT_EXPORT_METHOD(
     }
 }
 
-- (NSDictionary *)getMessageDictionary:(BMA4SInBoxMessage *)message withLimitBody:(BOOL)isLimitBody {
+- (NSDictionary *)getMessageDictionary:(NSUInteger)index message:(BMA4SInBoxMessage *)message withLimitBody:(BOOL)isLimitBody {
     NSString *text = message.text;
 
     if (isLimitBody && message.text.length > 140) {
@@ -280,7 +280,10 @@ RCT_EXPORT_METHOD(
     }
 
     //Create Message Dictionary
-    NSDictionary *messageData = @{@"title": message.title,
+    NSDictionary *messageData = @{
+            @"type": @"message",
+            @"index": @(index),
+            @"title": message.title,
             @"body": text,
             @"timestamp": message.date,
             @"category": message.category,
@@ -301,7 +304,7 @@ RCT_EXPORT_METHOD(
     //See if we have a cached message for that index and return it if so
     if (_messages != nil && _messages.count >= index) {
         if (_messages[index] != nil) {
-            NSDictionary *messageData = [self getMessageDictionary:_messages[index] withLimitBody:YES];
+            NSDictionary *messageData = [self getMessageDictionary:index message:_messages[index] withLimitBody:YES];
             promise(messageData);
             return;
         }
@@ -329,7 +332,7 @@ RCT_EXPORT_METHOD(
 
     NSUInteger nsi = (NSUInteger) index;
     [_inbox obtainMessageAtIndex:nsi loaded:^(BMA4SInBoxMessage *message, NSUInteger requestedIndex) {
-        NSDictionary *messageData = [self getMessageDictionary:message withLimitBody:YES];
+        NSDictionary *messageData = [self getMessageDictionary:requestedIndex message:message withLimitBody:YES];
         promise(messageData);
     }                    onError:^(NSUInteger requestedIndex) {
         NSString *errorMessage = [NSString stringWithFormat:@"Error loading message with index %i", requestedIndex];
@@ -368,7 +371,7 @@ RCT_EXPORT_METHOD(
         [message markAsUnread];
     }
 
-    NSDictionary *messageData = [self getMessageDictionary:message withLimitBody:NO];
+    NSDictionary *messageData = [self getMessageDictionary:index message:message withLimitBody:NO];
     promise(messageData);
 }
 
@@ -402,7 +405,7 @@ RCT_EXPORT_METHOD(
         [message unarchive];
     }
 
-    NSDictionary *messageData = [self getMessageDictionary:message withLimitBody:NO];
+    NSDictionary *messageData = [self getMessageDictionary:index message:message withLimitBody:NO];
     promise(messageData);
 }
 
