@@ -115,4 +115,25 @@ Accengage.markMessageAsArchived(index, bool);
 * @param bool
 */
 Accengage.markMessageAsRead(index, bool);
+
+##Message Format
+{
+  category: String,
+  sender: String,
+  read: Boolean,
+  title: String,
+  archived: Boolean,
+  customParameters: Object,
+  body: String,
+  timestamp: Timestamp/null
+}
+
+##Error Handling
+* Inbox loading result has been Cancelled
+* Inbox loading result has been Failed
+* There's already messages being loaded
+* Inbox doesn't exist
+* There's no messages. You need to first call getInboxMessages method.
+* Message doesn't exist
+
 ```

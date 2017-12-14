@@ -25,17 +25,17 @@ RCT_EXPORT_MODULE();
 #pragma mark - Permissions
 
 RCT_EXPORT_METHOD(
-                  hasPermissions:(RCTResponseSenderBlock)promise
+                  hasPermissions:(RCTResponseSenderBlock)callback
                   ) {
     UNUserNotificationCenter *notificationCenter = [UNUserNotificationCenter currentNotificationCenter];
     if (notificationCenter) {
         [notificationCenter getNotificationSettingsWithCompletionHandler:^(UNNotificationSettings *settings)
          {
-             promise(@[@(settings.authorizationStatus == UNAuthorizationStatusAuthorized)]);
+             callback(@[@(settings.authorizationStatus == UNAuthorizationStatusAuthorized)]);
          }];
     } else {
         BOOL hasPermissions = [[UIApplication sharedApplication] isRegisteredForRemoteNotifications];
-        promise(@[@(hasPermissions)]);
+        callback(@[@(hasPermissions)]);
     }
 }
 
@@ -145,7 +145,7 @@ RCT_EXPORT_METHOD(
         
     } failure:^(BMA4SInBoxLoadingResult result) {
         NSString *operation = (result == BMA4SInBoxLoadingResultCancelled ? @"Cancelled" : @"Failed");
-        NSString *errorMessage = [NSString stringWithFormat:@"Inbox loading result had been %@",operation];
+        NSString *errorMessage = [NSString stringWithFormat:@"Inbox loading result has been %@",operation];
         NSString *operationCode = [NSString stringWithFormat:@"%@",@(result)];
         reject(operationCode,errorMessage,nil);
     }];
@@ -179,7 +179,7 @@ RCT_EXPORT_METHOD(
 {
     if(_loadedMessages != nil)
     {
-        NSString *errorMessage = [NSString stringWithFormat:@"There's already messages being loaded"];
+        NSString *errorMessage = [self getMessageForError:AccengageCallIsLoading];
         NSString *operationCode = [NSString stringWithFormat:@"%@",@(AccengageCallIsLoading)];
         reject(operationCode,errorMessage,nil);
         return;
@@ -187,8 +187,8 @@ RCT_EXPORT_METHOD(
 
     if(_inbox == nil)
     {
-        NSString *errorMessage = [NSString stringWithFormat:@"Inbox was null"];
-        NSString *operationCode = [NSString stringWithFormat:@"%@",@(AccengageCallIsLoading)];
+        NSString *errorMessage = [self getMessageForError:InboxNotExists];
+        NSString *operationCode = [NSString stringWithFormat:@"%@",@(InboxNotExists)];
         reject(operationCode,errorMessage,nil);
         return;
     }
@@ -383,19 +383,19 @@ RCT_EXPORT_METHOD(
     }
 
     if(_inbox == nil){
-        NSString *errorMessage = @"Inbox doesn't exists anymore. ";
+        NSString *errorMessage = [self getMessageForError:InboxNotExists];
         NSString *operationCode = [NSString stringWithFormat:@"%@",@(InboxNotExists)];
         reject(operationCode, errorMessage, nil);
     }
 
     if(_messages == nil){
-        NSString *errorMessage = @"Messages disappeared. ";
+        NSString *errorMessage = [self getMessageForError:MessageNotExists];
         NSString *operationCode = [NSString stringWithFormat:@"%@",@(MessageNotExists)];
         reject(operationCode, errorMessage, nil);
     }
 
     if(_loadedMessages == nil){
-        NSString *errorMessage = @"Messages are already being loaded. ";
+        NSString *errorMessage = [self getMessageForError:AccengageCallIsLoading];
         NSString *operationCode = [NSString stringWithFormat:@"%@",@(AccengageCallIsLoading)];
         reject(operationCode, errorMessage, nil);
     }
@@ -405,7 +405,7 @@ RCT_EXPORT_METHOD(
         NSDictionary *messageData = [self getMessageDictionary:message withLimitBody:true];
         promise(messageData);
     } onError:^(NSUInteger requestedIndex) {
-        NSString *errorMessage = @"the call to obtain message at index ";
+        NSString *errorMessage = [self getMessageForError:AccengageCallResultError];
         NSString *operationCode = [NSString stringWithFormat:@"%@",@(AccengageCallResultError)];
         reject(operationCode,errorMessage,nil);
     }];
@@ -421,14 +421,14 @@ RCT_EXPORT_METHOD(
 
     if(_inbox == nil)
     {
-        NSString *errorMessage = @"There's no inbox to update";
+        NSString *errorMessage = [self getMessageForError:InboxNotExists];
         NSString *operationCode = [NSString stringWithFormat:@"%@",@(InboxNotExists)];
         reject(operationCode,errorMessage,nil);
     }
 
     if(_messages == nil)
     {
-        NSString *errorMessage = @"There's no messages to mark";
+        NSString *errorMessage = [self getMessageForError:InboxMessageListNotExists];
         NSString *operationCode = [NSString stringWithFormat:@"%@",@(InboxMessageListNotExists)];
         reject(operationCode,errorMessage,nil);
     }
@@ -438,7 +438,7 @@ RCT_EXPORT_METHOD(
     
     if(message == nil)
     {
-        NSString *errorMessage = @"Couldn't find the message to mark";
+        NSString *errorMessage = [self getMessageForError:MessageNotExists];
         NSString *operationCode = [NSString stringWithFormat:@"%@",@(MessageNotExists)];
         reject(operationCode,errorMessage,nil);
     }
@@ -458,14 +458,14 @@ RCT_EXPORT_METHOD(
 
     if(_inbox == nil)
     {
-        NSString *errorMessage = @"There's no inbox to update";
+        NSString *errorMessage = [self getMessageForError:InboxNotExists];
         NSString *operationCode = [NSString stringWithFormat:@"%@",@(InboxNotExists)];
         reject(operationCode,errorMessage,nil);
     }
 
     if(_messages == nil)
     {
-        NSString *errorMessage = @"There's no messages to mark";
+        NSString *errorMessage = [self getMessageForError:InboxMessageListNotExists];
         NSString *operationCode = [NSString stringWithFormat:@"%@",@(InboxMessageListNotExists)];
         reject(operationCode,errorMessage,nil);
     }
@@ -475,7 +475,7 @@ RCT_EXPORT_METHOD(
 
     if(message == nil)
     {
-        NSString *errorMessage = @"Couldn't find the message to mark";
+        NSString *errorMessage = [self getMessageForError:MessageNotExists];
         NSString *operationCode = [NSString stringWithFormat:@"%@",@(MessageNotExists)];
         reject(operationCode,errorMessage,nil);
     }
@@ -506,6 +506,24 @@ RCT_EXPORT_METHOD(
     _messages = nil;
     _loadedMessages = nil;
     _inbox = nil;
+}
+
+
+#pragma mark - Helper method to store error messages
+-(NSString*)getMessageForError:(NSInteger)error{
+    switch(error){
+        case MessageNotExists:
+            return @"Message doesn't exists";
+        case InboxMessageListNotExists:
+            return @"There's no messages. You need to first call getInboxMessages method.";
+        case InboxNotExists:
+            return @"Inbox doesn't exist";
+        case AccengageCallIsLoading:
+            return @"There's already messages being loaded";
+        default:
+            return @"Unexpected error";
+
+    }
 }
 
 @end
