@@ -261,46 +261,6 @@ RCT_EXPORT_METHOD(
     }
 }
 
-#pragma mark Create Messages Dummy
-- (NSMutableArray *)createMessagesDummyWithLimit:(int)limit
-{
-    //Get Current Date
-    NSDate* date = [NSDate date];
-    NSDateFormatter* formatter = [[NSDateFormatter alloc] init];
-    NSTimeZone *destinationTimeZone = [NSTimeZone systemTimeZone];
-    formatter.timeZone = destinationTimeZone;
-    [formatter setDateStyle:NSDateFormatterLongStyle];
-    [formatter setDateFormat:@"MM/dd/yyyy hh:mma"];
-    NSString* dateString = [formatter stringFromDate:date];
-    
-    NSDictionary *messageData = @{@"type"        : @"message",
-                                  @"title"       : @"Welcome Message",
-                                  @"body"        : @"This is a test message",
-                                  @"timestamp"   : dateString,
-                                  @"category"    : @"Message's Category",
-                                  @"sender"      : @"Sender",
-                                  @"read"        : @false,
-                                  @"archived"    : @false,
-                                  @"customParameters" : @{}
-                                  };
-    
-    NSDictionary *errorMessageData = [self getErrorMessageDictionary];
-    
-    NSMutableArray *messages = [NSMutableArray new];
-
-    for(int i = 0;i < limit; i++)
-    {
-        if(i % 2 == 0)
-        {
-            [messages addObject:messageData];
-        }else{
-            [messages addObject:errorMessageData];
-        }
-    }
-    
-    return messages;
-}
-
 RCT_EXPORT_METHOD(
                   resolvePromiseIfReadyWithPageIndex:(int)pageIndex
                   limit:(int)limit
