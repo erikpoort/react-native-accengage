@@ -300,11 +300,6 @@ RCT_EXPORT_METHOD(
     }
 }
 
-- (NSDictionary *)getErrorMessageDictionary
-{
-    return @{@"type" : @"error"};
-}
-
 - (NSDictionary *)getMessageDictionary:(BMA4SInBoxMessage *)message withLimitBody:(bool)isLimitBody
 {
     NSString *text = message.text;
