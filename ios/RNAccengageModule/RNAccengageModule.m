@@ -8,7 +8,6 @@
 
 #import "RNAccengageModule.h"
 #import <Accengage/Accengage.h>
-#import <React/RCTUtils.h>
 
 static NSString *const kRejectCode = @"RNAccengageModule.h";
 static NSString *const kPushRequested = @"pushRequested";
@@ -210,9 +209,9 @@ RCT_EXPORT_METHOD(
 
         //In order to avoid index out of bounds, we check that our messages array has, at least, the value we're looking for.
         if(_messages.count >= currentIndex + 1){
-            if([_messages objectAtIndex:currentIndex] != nil){
-                BMA4SInBoxMessage* cachedMessage = [_messages objectAtIndex:currentIndex];
-                [_loadedMessages setObject:cachedMessage atIndexedSubscript:currentIndex];
+            if(_messages[currentIndex] != nil){
+                BMA4SInBoxMessage* cachedMessage = _messages[currentIndex];
+                _loadedMessages[currentIndex] = cachedMessage;
 
                 //Increase the number of loaded messages
                 _numLoadedMessages --;
@@ -231,7 +230,7 @@ RCT_EXPORT_METHOD(
                 return;
             }
 
-            [_loadedMessages setObject:message atIndexedSubscript:requestedIndex];
+            _loadedMessages[requestedIndex] = message;
             _numLoadedMessages --;
 
 
@@ -245,7 +244,7 @@ RCT_EXPORT_METHOD(
             }
 
             //remove number of loaded messages when the service call had failed, without changing indexes
-			[_loadedMessages setObject:[NSNull null] atIndexedSubscript:requestedIndex];
+			_loadedMessages[requestedIndex] = [NSNull null];
             _numLoadedMessages--;
 
             [self resolvePromiseIfReadyWithPageIndex:pageIndex limit:limit messageCallback:callback rejecter:^(NSString *code, NSString *message, NSError *error) {
@@ -318,12 +317,12 @@ RCT_EXPORT_METHOD(
         for(int i = 0;i < leni;i++)
         {
             int currentIndex = startIndex + i;
-            BMA4SInBoxMessage *loadedMessage = [_loadedMessages objectAtIndex:currentIndex];
             
+            BMA4SInBoxMessage *loadedMessage = _loadedMessages[currentIndex];
             if([loadedMessage isKindOfClass:[BMA4SInBoxMessage classForCoder]])
             {
-                [_messages setObject:loadedMessage atIndexedSubscript:currentIndex];
                 
+                _messages[currentIndex] = loadedMessage;
                 NSDictionary *messageData = [self getMessageDictionary:loadedMessage withLimitBody:true];
                 [messageList addObject:messageData];
             }
@@ -362,8 +361,8 @@ RCT_EXPORT_METHOD(
                                   @"timestamp"   : message.date,
                                   @"category"    : message.category,
                                   @"sender"      : message.from,
-                                  @"read"        : [NSNumber numberWithBool:message.isRead],
-                                  @"archived"    : [NSNumber numberWithBool:message.isArchived],
+                                  @"read"        : @(message.isRead),
+                                  @"archived"    : @(message.isArchived),
                                   @"customParameters" : message.customParams
                                   };
     
@@ -377,8 +376,8 @@ RCT_EXPORT_METHOD(
                   ){
     //See if we have a cached message for that index and return it if so
     if(_messages != nil && _messages.count >= index){
-        if([_messages objectAtIndex:index] != nil){
-            NSDictionary *messageData = [self getMessageDictionary:[_messages objectAtIndex:index] withLimitBody:true];
+        if(_messages[index] != nil){
+            NSDictionary *messageData = [self getMessageDictionary:_messages[index] withLimitBody:true];
             promise(messageData);
             return;
         }
@@ -434,9 +433,9 @@ RCT_EXPORT_METHOD(
 		return;
     }
 
-    
-    BMA4SInBoxMessage *message = [_messages objectAtIndex:index];
-    
+
+    BMA4SInBoxMessage *message = _messages[index];
+
     if(message == nil)
     {
         reject(ERROR_GENERAL, @"Couldn't find the message to mark", nil);
@@ -469,7 +468,7 @@ RCT_EXPORT_METHOD(
     }
 
 
-    BMA4SInBoxMessage *message = [_messages objectAtIndex:index];
+    BMA4SInBoxMessage *message = _messages[index];
 
     if(message == nil)
     {
