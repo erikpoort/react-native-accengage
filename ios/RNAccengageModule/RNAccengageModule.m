@@ -285,7 +285,7 @@ RCT_EXPORT_METHOD(
             @"index": @(index),
             @"title": message.title,
             @"body": text,
-            @"timestamp": message.date,
+            @"timestamp": @(message.date.timeIntervalSince1970),
             @"category": message.category,
             @"sender": message.from,
             @"read": @(message.isRead),
