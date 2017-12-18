@@ -285,7 +285,7 @@ RCT_EXPORT_METHOD(
             @"index": @(index),
             @"title": message.title,
             @"body": text,
-            @"timestamp": [NSString stringWithFormat:@"%lli", [@(floor(message.date.timeIntervalSince1970)) longLongValue]],
+            @"timestamp": @(message.date.timeIntervalSince1970),
             @"category": message.category,
             @"sender": message.from,
             @"read": @(message.isRead),
