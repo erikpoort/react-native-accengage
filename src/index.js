@@ -67,6 +67,50 @@ function updateDeviceInfo(object) {
   RNAccengageModule.updateDeviceInfo(object);
 }
 
+/**
+ * Get Inbox Messages
+ * @param callback returns an inbox messages list
+ */
+function getInboxMessages() {
+  return RNAccengageModule.getInboxMessages();
+}
+
+/**
+* Get Inbox Messages
+* @param index
+* @return Promise with an Accengage Inbox Message or error
+*/
+function getMessage(index) {
+  return RNAccengageModule.getMessageAtIndex(index);
+}
+
+/**
+* Mark Message as Read
+* @param index
+* @param isRead
+* @return Promise with an Accengage Inbox Message or error
+*/
+function markMessageAsRead(index, isRead) {
+  return RNAccengageModule.markMessageAsRead(index, isRead);
+}
+
+/**
+* Mark Message as Archived
+* @param index
+* @param isArchived
+* @return Promise with an Accengage Inbox Message or error
+*/
+function markMessageAsArchived(index, isArchived) {
+  return RNAccengageModule.markMessageAsArchived(index, isArchived);
+}
+
+/**
+ * Clear the message cache
+ */
+function clearMessages() {
+  RNAccengageModule.clearMessages();
+}
+
 module.exports = {
   hasPermissions,
   requestPermissions,
@@ -75,4 +119,9 @@ module.exports = {
   trackEventWithCustomData,
   trackLead,
   updateDeviceInfo,
+  getInboxMessages,
+  getMessage,
+  markMessageAsRead,
+  markMessageAsArchived,
+  clearMessages,
 }
