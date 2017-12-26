@@ -1,6 +1,6 @@
 # react-native-accengage
 ReactNative module for Accengage 6.0.0+
-Version 1.1.4
+Version 1.2.0
 
 ## Installation
 
@@ -28,8 +28,7 @@ Application.java.
 import Accengage from 'react-native-accengage';
 ```
 
-Right now hasPermissions, requestPermission, trackEvent, trackEventWithCustomData and trackLead are 
-implemented. 
+Implemented calls:
 ```js
 /**
  * Check if user has granted push permissions
@@ -73,7 +72,7 @@ Accengage.trackEventWithCustomData(key, customData);
  * @param label
  * @param value
  */
-Accengage.trackLead(label, value);
+Accengage.trackLead(labelLabel, leadValue);
 
 /**
 * Update device info
@@ -82,4 +81,86 @@ Accengage.trackLead(label, value);
 * @param object
 */
 Accengage.updateDeviceInfo(object);
+
+/**
+* Get Inbox Messages
+* Returns an array of a maximum of 20 Messages.
+* @param object
+*/
+Accengage.getInboxMessages();
+
+/**
+* Get Message
+* Returns a single message given an index.
+* Before calling this method, getInboxMessages() should be invocated.
+* @param index
+*/
+Accengage.getMessage(index);
+
+/**
+* Mark Message As Archived
+* Archive a message. Returns the message with the new value.
+* Before calling this method, getInboxMessages() should be invocated.
+* @param index
+* @param bool
+*/
+Accengage.markMessageAsArchived(index, bool);
+
+/**
+* Mark Message As Read
+* Read a message. Returns the message with the new value.
+* Before calling this method, getInboxMessages() should be invocated.
+* @param index
+* @param bool
+*/
+Accengage.markMessageAsRead(index, bool);
 ```
+
+## Message Format
+When a message was succefully retrieved, it will have the following structure:
+
+```
+{
+  type: "message",
+  index: Integer,
+  category: String,
+  sender: String,
+  read: Boolean,
+  title: String,
+  archived: Boolean,
+  customParameters: Object,
+  body: String,
+  timestamp: Timestamp/null
+}
+```
+
+Due too the way the Accengage SDK is setup, you need to do seperate message detail calls to be 
+able to fill a list. As some of those can fail, the list can contain messages of the following 
+structure as well. In which case you can show a row with a retry button for example.
+```
+{
+  type: "error",
+  index: Integer
+}
+```
+
+## Error Handling
+When an inbox call fails, it will reject a promise. These are the codes you can handle: 
+
+`loading_inbox_failed`
+When the very first call to Accengage fails
+
+`loading_message_failed`
+Only in case of retrieving a single message
+
+`already_loading`
+When you try to load a list, while a previous one was still loading
+
+`general_error`
+These are errors that shouldn't happen. Think of memory issues or async calls finishing after 
+cleanup.
+Examples:
+- Inbox was null
+- Inbox doesn't exist anymore
+- Messages disappeared
+- Couldn't find the message to mark read/archived
