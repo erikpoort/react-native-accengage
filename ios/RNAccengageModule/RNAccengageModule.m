@@ -22,6 +22,7 @@ static NSString *const ERROR_GENERAL = @"general_error";
     NSMutableArray *_messages;
     NSMutableArray *_loadedMessages;
     NSUInteger _numLoadedMessages;
+    NSMutableDictionary *_contentMap;
 }
 
 RCT_EXPORT_MODULE();
@@ -139,9 +140,9 @@ RCT_EXPORT_METHOD(
     [self getAccengageInboxWithSuccess:^(BMA4SInBox *inbox) {
         _inbox = inbox;
         //Get Accengage Messsages From Index with limit
-        [self getMessagesFromIndex:pageIndex limit:limit messageListCallback:^(NSArray *response) {
+        [self getMessagesFromPageIndex:pageIndex limit:limit messageListCallback:^(NSArray *response) {
             promise(response);
-        }                 rejecter:^(NSString *code, NSString *message, NSError *error) {
+        }                     rejecter:^(NSString *code, NSString *message, NSError *error) {
             reject(code, message, error);
         }];
 
@@ -162,7 +163,7 @@ RCT_EXPORT_METHOD(
     }];
 }
 
-- (void)getMessagesFromIndex:(NSUInteger)pageIndex limit:(NSUInteger)limit messageListCallback:(RCTPromiseResolveBlock)callback rejecter:(RCTPromiseRejectBlock)reject {
+- (void)getMessagesFromPageIndex:(NSUInteger)pageIndex limit:(NSUInteger)limit messageListCallback:(RCTPromiseResolveBlock)callback rejecter:(RCTPromiseRejectBlock)reject {
     if (_loadedMessages != nil) {
         reject(ERROR_ALREADY_LOADING, @"There's already messages being loaded", nil);
         return;
@@ -256,7 +257,7 @@ RCT_EXPORT_METHOD(
             if ([loadedMessage isKindOfClass:[BMA4SInBoxMessage classForCoder]]) {
 
                 _messages[currentIndex] = loadedMessage;
-                NSDictionary *messageData = [self getMessageDictionary:currentIndex message:loadedMessage withLimitBody:true];
+                NSDictionary *messageData = [self getMessageDictionary:currentIndex message:loadedMessage withLimitBody:YES];
                 [messageList addObject:messageData];
             } else {
                 //if get message call failed
@@ -267,6 +268,8 @@ RCT_EXPORT_METHOD(
                 [messageList addObject:errorMessageData];
             }
         }
+
+        _loadedMessages = nil;
 
         promise(messageList);
     }
@@ -280,20 +283,50 @@ RCT_EXPORT_METHOD(
     }
 
     //Create Message Dictionary
-    NSDictionary *messageData = @{
+    NSMutableDictionary *messageData = @{
             @"type": @"message",
             @"index": @(index),
-            @"title": message.title,
-            @"body": text,
-            @"timestamp": @(message.date.timeIntervalSince1970),
+            @"subject": message.title,
             @"category": message.category,
+            @"summary": text,
+            @"timestamp": @(message.date.timeIntervalSince1970),
             @"sender": message.from,
             @"read": @(message.isRead),
             @"archived": @(message.isArchived),
             @"customParameters": message.customParams
-    };
+    }.mutableCopy;
 
-    return messageData;
+    BMA4SInBoxMessageContent *content = _contentMap[@(index)];
+
+    if (content) {
+        NSString *contentTypeValue;
+        switch (content.type) {
+            case BMA4SMessageContentTypeText: {
+                contentTypeValue = @"text";
+                break;
+            }
+            case BMA4SMessageContentTypeWeb: {
+                contentTypeValue = @"web";
+                break;
+            }
+        }
+
+        NSMutableArray *buttons = @[].mutableCopy;
+        [content.buttons enumerateObjectsUsingBlock:^(BMA4SInBoxButton *button, NSUInteger i, BOOL *stop) {
+            [buttons addObject:@{
+                    @"index": @(i),
+                    @"title": button.title,
+            }];
+        }];
+
+        messageData[@"content"] = @{
+                @"type": contentTypeValue,
+                @"body": content.body,
+                @"buttons": buttons.copy,
+        };
+    }
+
+    return messageData.copy;
 }
 
 RCT_EXPORT_METHOD(
@@ -303,8 +336,8 @@ RCT_EXPORT_METHOD(
 ) {
     //See if we have a cached message for that index and return it if so
     if (_messages != nil && _messages.count >= index) {
-        if (_messages[index] != nil) {
-            NSDictionary *messageData = [self getMessageDictionary:index message:_messages[index] withLimitBody:YES];
+        if (_messages[index] != nil && _contentMap != nil && _contentMap[@(index)] != nil) {
+            NSDictionary *messageData = [self getMessageDictionary:index message:_messages[index] withLimitBody:NO];
             promise(messageData);
             return;
         }
@@ -320,7 +353,7 @@ RCT_EXPORT_METHOD(
         return;
     }
 
-    if (_loadedMessages == nil) {
+    if (_loadedMessages != nil) {
         reject(ERROR_ALREADY_LOADING, @"Messages are already being loaded", nil);
         return;
     }
@@ -330,14 +363,76 @@ RCT_EXPORT_METHOD(
         return;
     }
 
+    if (_contentMap == nil) {
+        _contentMap = @{}.mutableCopy;
+    }
+
     NSUInteger nsi = (NSUInteger) index;
     [_inbox obtainMessageAtIndex:nsi loaded:^(BMA4SInBoxMessage *message, NSUInteger requestedIndex) {
-        NSDictionary *messageData = [self getMessageDictionary:requestedIndex message:message withLimitBody:YES];
-        promise(messageData);
+        [message interactWithDisplayHandler:^(BMA4SInBoxMessage *interactedMessage, BMA4SInBoxMessageContent *content) {
+            if (content) {
+                _contentMap[@(index)] = content;
+            }
+            NSDictionary *messageData = [self getMessageDictionary:requestedIndex message:message withLimitBody:NO];
+            promise(messageData);
+        }];
     }                    onError:^(NSUInteger requestedIndex) {
         NSString *errorMessage = [NSString stringWithFormat:@"Error loading message with index %i", requestedIndex];
         reject(ERROR_LOADING_MESSAGE, errorMessage, nil);
     }];
+}
+
+RCT_EXPORT_METHOD(
+            interactWithButton:(NSUInteger) buttonIndex
+            onMessage:(NSUInteger) index
+            messageCallback:(RCTPromiseResolveBlock) promise
+            rejecter:(RCTPromiseRejectBlock) reject
+) {
+    if (_inbox == nil) {
+        reject(ERROR_GENERAL, @"Inbox doesn't exist anymore", nil);
+        return;
+    }
+
+    if (_messages == nil) {
+        reject(ERROR_GENERAL, @"Messages disappeared", nil);
+        return;
+    }
+
+    BMA4SInBoxMessage *message = _messages[index];
+
+    if (message == nil) {
+        reject(ERROR_GENERAL, @"Couldn't find the message to interact with", nil);
+        return;
+    }
+
+    if (_contentMap == nil) {
+        reject(ERROR_GENERAL, @"There are no contents loaded", nil);
+        return;
+    }
+
+    BMA4SInBoxMessageContent *messageContent = _contentMap[@(index)];
+
+    if (messageContent == nil) {
+        reject(ERROR_GENERAL, @"Couldn't find the content containing the buttons", nil);
+        return;
+    }
+
+    if (messageContent.buttons == nil) {
+        reject(ERROR_GENERAL, @"Couldn't find buttons for this content", nil);
+        return;
+    }
+
+    BMA4SInBoxButton *button = messageContent.buttons[buttonIndex];
+
+    if (button == nil) {
+        reject(ERROR_GENERAL, @"Couldn't find button in this content", nil);
+        return;
+    }
+
+    [button interact];
+
+    NSDictionary *messageData = [self getMessageDictionary:index message:_messages[index] withLimitBody:NO];
+    promise(messageData);
 }
 
 RCT_EXPORT_METHOD(
@@ -357,7 +452,6 @@ RCT_EXPORT_METHOD(
         return;
     }
 
-
     BMA4SInBoxMessage *message = _messages[index];
 
     if (message == nil) {
@@ -369,6 +463,40 @@ RCT_EXPORT_METHOD(
         [message markAsRead];
     } else {
         [message markAsUnread];
+    }
+
+    NSDictionary *messageData = [self getMessageDictionary:index message:message withLimitBody:NO];
+    promise(messageData);
+}
+
+RCT_EXPORT_METHOD(
+            markMessageAsDisplayed:(NSUInteger) index
+            displayed:(BOOL) displayed
+            callback:(RCTPromiseResolveBlock) promise
+            rejecter:(RCTPromiseRejectBlock) reject
+) {
+
+    if (_inbox == nil) {
+        reject(ERROR_GENERAL, @"Inbox doesn't exist anymore", nil);
+        return;
+    }
+
+    if (_messages == nil) {
+        reject(ERROR_GENERAL, @"Messages disappeared", nil);
+        return;
+    }
+
+    BMA4SInBoxMessage *message = _messages[index];
+
+    if (message == nil) {
+        reject(ERROR_GENERAL, @"Couldn't find the message to mark", nil);
+        return;
+    }
+
+    if (displayed) {
+        [message markAsDisplayed];
+    } else {
+        [message markAsUndisplayed];
     }
 
     NSDictionary *messageData = [self getMessageDictionary:index message:message withLimitBody:NO];
@@ -404,6 +532,64 @@ RCT_EXPORT_METHOD(
     } else {
         [message unarchive];
     }
+
+    NSDictionary *messageData = [self getMessageDictionary:index message:message withLimitBody:NO];
+    promise(messageData);
+}
+
+RCT_EXPORT_METHOD(
+            trackDisplay:(NSUInteger) index
+            callback:(RCTPromiseResolveBlock) promise
+            rejecter:(RCTPromiseRejectBlock) reject
+) {
+
+    if (_inbox == nil) {
+        reject(ERROR_GENERAL, @"Inbox doesn't exist anymore", nil);
+        return;
+    }
+
+    if (_messages == nil) {
+        reject(ERROR_GENERAL, @"Messages disappeared", nil);
+        return;
+    }
+
+    BMA4SInBoxMessage *message = _messages[index];
+
+    if (message == nil) {
+        reject(ERROR_GENERAL, @"Couldn't find the message to mark", nil);
+        return;
+    }
+
+    [message trackDisplay];
+
+    NSDictionary *messageData = [self getMessageDictionary:index message:message withLimitBody:NO];
+    promise(messageData);
+}
+
+RCT_EXPORT_METHOD(
+            trackOpening:(NSUInteger) index
+            callback:(RCTPromiseResolveBlock) promise
+            rejecter:(RCTPromiseRejectBlock) reject
+) {
+
+    if (_inbox == nil) {
+        reject(ERROR_GENERAL, @"Inbox doesn't exist anymore", nil);
+        return;
+    }
+
+    if (_messages == nil) {
+        reject(ERROR_GENERAL, @"Messages disappeared", nil);
+        return;
+    }
+
+    BMA4SInBoxMessage *message = _messages[index];
+
+    if (message == nil) {
+        reject(ERROR_GENERAL, @"Couldn't find the message to mark", nil);
+        return;
+    }
+
+    [message trackOpening];
 
     NSDictionary *messageData = [self getMessageDictionary:index message:message withLimitBody:NO];
     promise(messageData);
