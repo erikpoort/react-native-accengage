@@ -94,6 +94,7 @@ Accengage.getInboxMessages();
 * Returns a single message given an index.
 * Before calling this method, getInboxMessages() should be invocated.
 * @param index
+* @return Promise with either a message or null (in which case a webview is opened)
 */
 Accengage.getMessage(index);
 
