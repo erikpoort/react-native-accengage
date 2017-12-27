@@ -187,21 +187,17 @@ RCT_EXPORT_METHOD(
     for (NSUInteger i = 0; i < leni; i++) {
         NSUInteger currentIndex = startIndex + i;
 
-        //In order to avoid index out of bounds, we check that our messages array has, at least, the value we're looking for.
-        if (_messages.count >= currentIndex + 1) {
-            if (_messages[currentIndex] != nil) {
+        //In order to avoid index out of bounds
+        if (currentIndex < _messages.count) {
+            if (![_messages[currentIndex] isKindOfClass:[NSNull class]]) {
                 BMA4SInBoxMessage *cachedMessage = _messages[currentIndex];
                 _loadedMessages[currentIndex] = cachedMessage;
 
                 //Increase the number of loaded messages
                 _numLoadedMessages--;
-
-                [self resolvePromiseIfReadyWithPageIndex:pageIndex limit:limit messageCallback:callback rejecter:^(NSString *code, NSString *message, NSError *error) {
-                    reject(code, message, error);
-                }];
-
-                return;
             }
+        } else {
+            _loadedMessages[currentIndex] = [NSNull null];
         }
 
         [_inbox obtainMessageAtIndex:currentIndex loaded:^(BMA4SInBoxMessage *message, NSUInteger requestedIndex) {
