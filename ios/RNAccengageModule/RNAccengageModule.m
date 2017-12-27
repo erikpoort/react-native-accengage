@@ -289,8 +289,11 @@ RCT_EXPORT_METHOD(
             @"sender": message.from,
             @"read": @(message.isRead),
             @"archived": @(message.isArchived),
-            @"customParameters": message.customParams
     }.mutableCopy;
+
+    if (message.customParams != nil) {
+        messageData[@"customParameters"] = message.customParams;
+    }
 
     BMA4SInBoxMessageContent *content = _contentMap[@(index)];
 
