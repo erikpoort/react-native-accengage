@@ -366,19 +366,28 @@ RCT_EXPORT_METHOD(
         _contentMap = @{}.mutableCopy;
     }
 
-    NSUInteger nsi = (NSUInteger) index;
-    [_inbox obtainMessageAtIndex:nsi loaded:^(BMA4SInBoxMessage *message, NSUInteger requestedIndex) {
-        [message interactWithDisplayHandler:^(BMA4SInBoxMessage *interactedMessage, BMA4SInBoxMessageContent *content) {
-            if (content) {
-                _contentMap[@(index)] = content;
-            }
-            NSDictionary *messageData = [self getMessageDictionary:requestedIndex message:message withLimitBody:NO];
-            promise(messageData);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [_inbox obtainMessageAtIndex:index loaded:^(BMA4SInBoxMessage *message, NSUInteger requestedIndex) {
+            [message interactWithDisplayHandler:^(BMA4SInBoxMessage *interactedMessage, BMA4SInBoxMessageContent *content) {
+                if (content) {
+                    _contentMap[@(index)] = content;
+                }
+                NSDictionary *messageData = [self getMessageDictionary:requestedIndex message:message withLimitBody:NO];
+                promise(messageData);
+            }];
+
+            CGFloat delay = 0.3; // In seconds
+            dispatch_time_t time = dispatch_time(DISPATCH_TIME_NOW, (int64_t) (delay * NSEC_PER_SEC));
+            dispatch_after(time, dispatch_get_main_queue(), ^(void) {
+                if (_contentMap[@(index)] == nil) {
+                    promise(nil);
+                }
+            });
+        }                    onError:^(NSUInteger requestedIndex) {
+            NSString *errorMessage = [NSString stringWithFormat:@"Error loading message with index %i", requestedIndex];
+            reject(ERROR_LOADING_MESSAGE, errorMessage, nil);
         }];
-    }                    onError:^(NSUInteger requestedIndex) {
-        NSString *errorMessage = [NSString stringWithFormat:@"Error loading message with index %i", requestedIndex];
-        reject(ERROR_LOADING_MESSAGE, errorMessage, nil);
-    }];
+    });
 }
 
 RCT_EXPORT_METHOD(
