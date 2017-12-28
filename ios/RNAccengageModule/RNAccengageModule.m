@@ -147,8 +147,8 @@ RCT_EXPORT_METHOD(
         }];
 
     }                          failure:^(BMA4SInBoxLoadingResult result) {
-        NSString *operation = (result == BMA4SInBoxLoadingResultCancelled ? @"Cancelled" : @"Failed");
-        NSString *errorMessage = [NSString stringWithFormat:@"Inbox loading result has been %@", operation];
+        NSString *operation = (result == BMA4SInBoxLoadingResultCancelled ? @"been cancelled" : @"failed");
+        NSString *errorMessage = [NSString stringWithFormat:@"Inbox loading result has %@", operation];
         reject(ERROR_LOADING_INBOX, errorMessage, nil);
     }];
 }
@@ -184,6 +184,12 @@ RCT_EXPORT_METHOD(
     _loadedMessages = [NSMutableArray new];
     _numLoadedMessages = leni;
 
+    // faking a sparse array
+    for (NSUInteger i = 0; i < leni; i++) {
+        NSUInteger currentIndex = startIndex + i;
+        _loadedMessages[currentIndex] = [NSNull null];
+    }
+
     for (NSUInteger i = 0; i < leni; i++) {
         NSUInteger currentIndex = startIndex + i;
 
@@ -193,11 +199,9 @@ RCT_EXPORT_METHOD(
                 BMA4SInBoxMessage *cachedMessage = _messages[currentIndex];
                 _loadedMessages[currentIndex] = cachedMessage;
 
-                //Increase the number of loaded messages
+                //Decrease the number of loaded messages
                 _numLoadedMessages--;
             }
-        } else {
-            _loadedMessages[currentIndex] = [NSNull null];
         }
 
         [_inbox obtainMessageAtIndex:currentIndex loaded:^(BMA4SInBoxMessage *message, NSUInteger requestedIndex) {
