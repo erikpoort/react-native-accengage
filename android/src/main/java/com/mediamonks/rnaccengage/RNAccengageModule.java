@@ -1,5 +1,7 @@
 package com.mediamonks.rnaccengage;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.SparseArray;
@@ -309,11 +311,40 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         return map;
     }
 
+    private void handleMessageResolver(final int index, final Promise promise) {
+        Message message = _messages.get(index);
+        if (message != null) {
+            switch (message.getContentType()) {
+                case Text:
+                    // Return the message to js to handle ui
+                    promise.resolve(transformMessageToMap(index, message, false));
+                    return;
+                case Web:
+                case Url:
+                case System:
+                    // Because iOS automatically opens the url, we should do the same here
+                    String url = message.getBody();
+                    if (!url.startsWith("http://") && !url.startsWith("https://") && !url.startsWith("aeromexico://")) {
+                        url = "http://" + url;
+                    }
+                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    getReactApplicationContext().startActivity(browserIntent);
+                    break;
+                case Event:
+                case Push:
+                    // Not supported
+                    promise.reject(ERROR_GENERAL, "We currently don't support the " + message.getContentType().name() + " content type.");
+                    return;
+            }
+        }
+        promise.resolve(null);
+    }
+
     @ReactMethod
     public void getMessageAtIndex(final int index, final Promise promise) {
         // See if we have a cached message for that index and return it if so.
         if (_messages != null && _messages.get(index) != null) {
-            promise.resolve(transformMessageToMap(index, _messages.get(index), false));
+            handleMessageResolver(index, promise);
             return;
         }
 
@@ -339,7 +370,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         _inbox.getMessage(index, new A4S.MessageCallback() {
             @Override public void onResult(Message message, int loadedMessageIndex) {
                 _messages.put(loadedMessageIndex, message);
-                promise.resolve(transformMessageToMap(loadedMessageIndex, message, false));
+                handleMessageResolver(index, promise);
             }
 
             @Override public void onError(int failedMessageIndex, String s) {
