@@ -267,7 +267,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         map.putString("subject", message.getTitle());
         map.putString("category", message.getCategory());
         map.putString("summary", text);
-        map.putDouble("timestamp", message.getSendDate().getTime());
+        map.putDouble("timestamp", message.getSendDate().getTime() / 1000);
         map.putString("sender", message.getSender());
         map.putBoolean("read", message.isRead());
         map.putBoolean("archived", message.isArchived());
