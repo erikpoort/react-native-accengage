@@ -1,5 +1,7 @@
 package com.mediamonks.rnaccengage;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.SparseArray;
@@ -252,36 +254,97 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
     private WritableMap transformMessageToMap(int index, Message message, boolean limitBody) {
         WritableMap map = Arguments.createMap();
 
-        String body = message.getBody();
-        if (limitBody && body.length() > 140) {
-            body = body.substring(0, 140);
+        String text = message.getText();
+        if (limitBody && text.length() > 140) {
+            text = text.substring(0, 140);
         }
 
         Bundle bundle = new Bundle();
         for (Map.Entry<String, String> entry : message.getCustomParameters().entrySet()) {
             bundle.putString(entry.getKey(), entry.getValue());
         }
-        WritableMap customParameters = Arguments.fromBundle(bundle);
 
         map.putString("type", "message");
         map.putInt("index", index);
-        map.putString("title", message.getTitle());
-        map.putString("body", body);
-        map.putDouble("timestamp", message.getSendDate().getTime());
+        map.putString("subject", message.getTitle());
         map.putString("category", message.getCategory());
+        map.putString("summary", text);
+        map.putDouble("timestamp", message.getSendDate().getTime() / 1000);
         map.putString("sender", message.getSender());
         map.putBoolean("read", message.isRead());
         map.putBoolean("archived", message.isArchived());
+
+        WritableMap customParameters = Arguments.fromBundle(bundle);
         map.putMap("customParameters", customParameters);
 
+        String contentType = null;
+        switch (message.getContentType()) {
+            case Text:
+                contentType = "text";
+                break;
+            case Web:
+                contentType = "web";
+                break;
+            default:
+                break;
+        }
+
+        if (contentType != null) {
+            WritableMap contentMap = Arguments.createMap();
+
+            contentMap.putString("type", contentType);
+            contentMap.putString("body", message.getBody());
+
+            WritableArray buttons = Arguments.createArray();
+            for (int i = 0; i < message.countButtons(); ++i) {
+                Message.Button button = message.getButton(i);
+                WritableMap buttonMap = Arguments.createMap();
+                buttonMap.putInt("index", i);
+                buttonMap.putString("title", button.getTitle());
+                buttons.pushMap(buttonMap);
+            }
+            contentMap.putArray("buttons", buttons);
+
+            map.putMap("content", contentMap);
+        }
+
         return map;
+    }
+
+    private void handleMessageResolver(final int index, final Promise promise) {
+        Message message = _messages.get(index);
+        if (message != null) {
+            switch (message.getContentType()) {
+                case Text:
+                    // Return the message to js to handle ui
+                    promise.resolve(transformMessageToMap(index, message, false));
+                    return;
+                case Web:
+                case Url:
+                case System:
+                    // Because iOS automatically opens the url, we should do the same here
+                    String url = message.getBody();
+                    if (!url.startsWith("http://") && !url.startsWith("https://") && !url.startsWith("aeromexico://")) {
+                        url = "http://" + url;
+                    }
+                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    getReactApplicationContext().startActivity(browserIntent);
+                    break;
+                case Event:
+                case Push:
+                    // Not supported
+                    promise.reject(ERROR_GENERAL, "We currently don't support the " + message.getContentType().name() + " content type.");
+                    return;
+            }
+        }
+        promise.resolve(null);
     }
 
     @ReactMethod
     public void getMessageAtIndex(final int index, final Promise promise) {
         // See if we have a cached message for that index and return it if so.
         if (_messages != null && _messages.get(index) != null) {
-            promise.resolve(transformMessageToMap(index, _messages.get(index), false));
+            handleMessageResolver(index, promise);
             return;
         }
 
@@ -307,13 +370,50 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         _inbox.getMessage(index, new A4S.MessageCallback() {
             @Override public void onResult(Message message, int loadedMessageIndex) {
                 _messages.put(loadedMessageIndex, message);
-                promise.resolve(transformMessageToMap(loadedMessageIndex, message, false));
+                handleMessageResolver(index, promise);
             }
 
             @Override public void onError(int failedMessageIndex, String s) {
                 promise.reject(ERROR_LOADING_MESSAGE, s);
             }
         });
+    }
+
+    @ReactMethod
+    public void interactWithButton(final int buttonIndex, final int index, final Promise promise) {
+        if (_inbox == null) {
+            promise.reject(ERROR_GENERAL, "Inbox doesn't exist anymore");
+            return;
+        }
+        if (_messages == null) {
+            promise.reject(ERROR_GENERAL, "Messages disappeared");
+            return;
+        }
+
+        Message message = _messages.get(index);
+
+        if (message == null) {
+            promise.reject(ERROR_GENERAL, "Couldn't find the message to interact with");
+            return;
+        }
+
+        if (buttonIndex >= message.countButtons()) {
+
+            promise.reject(ERROR_GENERAL, "Couldn't find the button in this content");
+            return;
+        }
+
+        final Message.Button button = message.getButton(buttonIndex);
+
+        if (button == null) {
+
+            promise.reject(ERROR_GENERAL, "Couldn't find the button in this content");
+            return;
+        }
+
+        button.click(getReactApplicationContext());
+
+        promise.resolve(transformMessageToMap(index, message, false));
     }
 
     @ReactMethod
@@ -341,6 +441,30 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void markMessageAsDisplayed(final int index, final boolean diplayed, final Promise promise) {
+        if (_inbox == null) {
+            promise.reject(ERROR_GENERAL, "Inbox doesn't exist anymore");
+            return;
+        }
+        if (_messages == null) {
+            promise.reject(ERROR_GENERAL, "Messages disappeared");
+            return;
+        }
+
+        Message message = _messages.get(index);
+
+        if (message == null) {
+            promise.reject(ERROR_GENERAL, "Couldn't find the message to mark");
+            return;
+        }
+
+        message.setDisplayed(diplayed);
+        A4S.get(getReactApplicationContext()).updateMessages(_inbox);
+
+        promise.resolve(transformMessageToMap(index, message, false));
+    }
+
+    @ReactMethod
     public void markMessageAsArchived(final int index, final boolean archived, final Promise promise) {
         if (_inbox == null) {
             promise.reject(ERROR_GENERAL, "Inbox doesn't exist anymore");
@@ -360,6 +484,52 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
 
         message.setArchived(archived);
         A4S.get(getReactApplicationContext()).updateMessages(_inbox);
+
+        promise.resolve(transformMessageToMap(index, message, false));
+    }
+
+    @ReactMethod
+    public void trackDisplay(final int index, final Promise promise) {
+        if (_inbox == null) {
+            promise.reject(ERROR_GENERAL, "Inbox doesn't exist anymore");
+            return;
+        }
+        if (_messages == null) {
+            promise.reject(ERROR_GENERAL, "Messages disappeared");
+            return;
+        }
+
+        Message message = _messages.get(index);
+
+        if (message == null) {
+            promise.reject(ERROR_GENERAL, "Couldn't find the message to track");
+            return;
+        }
+
+        message.hasBeenDisplayedToUser(getReactApplicationContext());
+
+        promise.resolve(transformMessageToMap(index, message, false));
+    }
+
+    @ReactMethod
+    public void trackOpening(final int index, final Promise promise) {
+        if (_inbox == null) {
+            promise.reject(ERROR_GENERAL, "Inbox doesn't exist anymore");
+            return;
+        }
+        if (_messages == null) {
+            promise.reject(ERROR_GENERAL, "Messages disappeared");
+            return;
+        }
+
+        Message message = _messages.get(index);
+
+        if (message == null) {
+            promise.reject(ERROR_GENERAL, "Couldn't find the message to track");
+            return;
+        }
+
+        message.hasBeenOpenedByUser(getReactApplicationContext());
 
         promise.resolve(transformMessageToMap(index, message, false));
     }

@@ -85,7 +85,17 @@ function getMessage(index) {
 }
 
 /**
-* Mark Message as Read
+* Interact with button in message content
+* @param messageIndex
+* @param buttonIndex
+* @return Promise with an Accengage Inbox Message or error
+*/
+function interactWithButton(messageIndex, buttonIndex) {
+  return RNAccengageModule.interactWithButton(buttonIndex, messageIndex);
+}
+
+/**
+* Mark message as read
 * @param index
 * @param isRead
 * @return Promise with an Accengage Inbox Message or error
@@ -95,13 +105,41 @@ function markMessageAsRead(index, isRead) {
 }
 
 /**
-* Mark Message as Archived
+* Mark message as displayed
+* @param index
+* @param isDisplayed
+* @return Promise with an Accengage Inbox Message or error
+*/
+function markMessageAsDisplayed(index, isDisplayed) {
+  return RNAccengageModule.markMessageAsDisplayed(index, isDisplayed);
+}
+
+/**
+* Mark message as archived
 * @param index
 * @param isArchived
 * @return Promise with an Accengage Inbox Message or error
 */
 function markMessageAsArchived(index, isArchived) {
   return RNAccengageModule.markMessageAsArchived(index, isArchived);
+}
+
+/**
+* Track display
+* @param index
+* @return Promise with an Accengage Inbox Message or error
+*/
+function trackDisplay(index) {
+  return RNAccengageModule.trackDisplay(index);
+}
+
+/**
+* Track opening
+* @param index
+* @return Promise with an Accengage Inbox Message or error
+*/
+function trackOpening(index) {
+  return RNAccengageModule.trackOpening(index);
 }
 
 /**
@@ -121,7 +159,11 @@ module.exports = {
   updateDeviceInfo,
   getInboxMessages,
   getMessage,
+  interactWithButton,
   markMessageAsRead,
+  markMessageAsDisplayed,
   markMessageAsArchived,
+  trackDisplay,
+  trackOpening,
   clearMessages,
 }

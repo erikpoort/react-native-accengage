@@ -1,6 +1,6 @@
 # react-native-accengage
 ReactNative module for Accengage 6.0.0+
-Version 1.2.0
+Version 1.2.1
 
 ## Installation
 
@@ -94,11 +94,41 @@ Accengage.getInboxMessages();
 * Returns a single message given an index.
 * Before calling this method, getInboxMessages() should be invocated.
 * @param index
+* @return Promise with either a message or null (in which case a webview is opened)
 */
 Accengage.getMessage(index);
 
 /**
-* Mark Message As Archived
+* Interact with button in message content
+* @param messageIndex
+* @param buttonIndex
+* @return Promise with an Accengage Inbox Message or error
+*/
+function interactWithButton(messageIndex, buttonIndex) {
+  return RNAccengageModule.interactWithButton(buttonIndex, messageIndex);
+}
+
+/**
+* Mark message as read
+* Read a message. Returns the message with the new value.
+* Before calling this method, getInboxMessages() should be invocated.
+* @param index
+* @param bool
+*/
+Accengage.markMessageAsRead(index, bool);
+
+/**
+* Mark message as displayed
+* @param index
+* @param isDisplayed
+* @return Promise with an Accengage Inbox Message or error
+*/
+function markMessageAsDisplayed(index, isDisplayed) {
+return RNAccengageModule.markMessageAsDisplayed(index, isDisplayed);
+}
+
+/**
+* Mark message as archived
 * Archive a message. Returns the message with the new value.
 * Before calling this method, getInboxMessages() should be invocated.
 * @param index
@@ -107,13 +137,29 @@ Accengage.getMessage(index);
 Accengage.markMessageAsArchived(index, bool);
 
 /**
-* Mark Message As Read
-* Read a message. Returns the message with the new value.
-* Before calling this method, getInboxMessages() should be invocated.
+* Track display
 * @param index
-* @param bool
+* @return Promise with an Accengage Inbox Message or error
 */
-Accengage.markMessageAsRead(index, bool);
+function trackDisplay(index) {
+return RNAccengageModule.trackDisplay(index);
+}
+
+/**
+* Track opening
+* @param index
+* @return Promise with an Accengage Inbox Message or error
+*/
+function trackOpening(index) {
+return RNAccengageModule.trackOpening(index);
+}
+
+/**
+* Clear the message cache
+*/
+function clearMessages() {
+RNAccengageModule.clearMessages();
+}
 ```
 
 ## Message Format
@@ -123,14 +169,14 @@ When a message was succefully retrieved, it will have the following structure:
 {
   type: "message",
   index: Integer,
+  subject: String,
   category: String,
+  summary: String,
+  timestamp: Timestamp/null
   sender: String,
   read: Boolean,
-  title: String,
   archived: Boolean,
   customParameters: Object,
-  body: String,
-  timestamp: Timestamp/null
 }
 ```
 
