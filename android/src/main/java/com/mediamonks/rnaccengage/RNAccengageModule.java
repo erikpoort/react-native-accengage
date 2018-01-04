@@ -314,30 +314,26 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
     private void handleMessageResolver(final int index, final Promise promise) {
         Message message = _messages.get(index);
         if (message != null) {
-            switch (message.getContentType()) {
-                case Text:
-                    // Return the message to js to handle ui
-                    promise.resolve(transformMessageToMap(index, message, false));
-                    return;
-                case Web:
-                case Url:
-                case System:
-                    // Because iOS automatically opens the url, we should do the same here
-                    String url = message.getBody();
-                    if (!url.startsWith("http://") && !url.startsWith("https://") && !url.startsWith("aeromexico://")) {
-                        url = "http://" + url;
+            message.display(getReactApplicationContext(), new A4S.Callback<Message>() {
+                @Override public void onResult(Message displayedMessage) {
+                    if (displayedMessage != null) {
+                        _messages.put(index, displayedMessage);
                     }
-                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                    getReactApplicationContext().startActivity(browserIntent);
-                    break;
-                case Event:
-                case Push:
-                    // Not supported
-                    promise.reject(ERROR_GENERAL, "We currently don't support the " + message.getContentType().name() + " content type.");
-                    return;
+                    WritableMap messageData = transformMessageToMap(index, displayedMessage, false);
+                    promise.resolve(messageData);
+                }
+
+                @Override public void onError(int i, String s) {
+                    promise.reject(ERROR_GENERAL, s);
+                }
+            });
+
+            if (message.getContentType() != Message.MessageContentType.Text) {
+                promise.resolve(null);
             }
+        } else {
+            promise.reject(ERROR_LOADING_MESSAGE, "Message was not loaded");
         }
-        promise.resolve(null);
     }
 
     @ReactMethod
@@ -369,8 +365,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         // If the message was lost or never loaded, re-load it.
         _inbox.getMessage(index, new A4S.MessageCallback() {
             @Override public void onResult(Message message, int loadedMessageIndex) {
-                _messages.put(loadedMessageIndex, message);
-                handleMessageResolver(index, promise);
+                handleMessageResolver(loadedMessageIndex, promise);
             }
 
             @Override public void onError(int failedMessageIndex, String s) {
