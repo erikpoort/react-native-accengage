@@ -130,12 +130,7 @@ RCT_EXPORT_METHOD(
     }];
 }
 
-RCT_EXPORT_METHOD(
-            getInboxMessagesWithPageIndex:(NSUInteger) pageIndex
-            limit:(NSUInteger) limit
-            successCallback:(RCTPromiseResolveBlock) promise
-            rejecter:(RCTPromiseRejectBlock) reject
-) {
+- (void)getInboxMessagesWithPageIndex:(NSUInteger)pageIndex limit:(NSUInteger)limit successCallback:(RCTPromiseResolveBlock)promise rejecter:(RCTPromiseRejectBlock)reject {
     //Get Accengage Inbox
     [self getAccengageInboxWithSuccess:^(BMA4SInBox *inbox) {
         _inbox = inbox;
@@ -238,12 +233,7 @@ RCT_EXPORT_METHOD(
     }
 }
 
-RCT_EXPORT_METHOD(
-            resolvePromiseIfReadyWithPageIndex:(NSUInteger) pageIndex
-            limit:(NSUInteger) limit
-            messageCallback:(RCTPromiseResolveBlock) promise
-            rejecter:(RCTPromiseRejectBlock) reject
-) {
+- (void)resolvePromiseIfReadyWithPageIndex:(NSUInteger)pageIndex limit:(NSUInteger)limit messageCallback:(RCTPromiseResolveBlock)promise rejecter:(RCTPromiseRejectBlock)reject {
     if (_numLoadedMessages == 0) {
         NSUInteger startIndex = pageIndex * limit;
         NSUInteger leni = MIN(_inbox.size, startIndex + limit);
