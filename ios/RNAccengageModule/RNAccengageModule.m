@@ -130,12 +130,7 @@ RCT_EXPORT_METHOD(
     }];
 }
 
-RCT_EXPORT_METHOD(
-            getInboxMessagesWithPageIndex:(NSUInteger) pageIndex
-            limit:(NSUInteger) limit
-            successCallback:(RCTPromiseResolveBlock) promise
-            rejecter:(RCTPromiseRejectBlock) reject
-) {
+- (void)getInboxMessagesWithPageIndex:(NSUInteger)pageIndex limit:(NSUInteger)limit successCallback:(RCTPromiseResolveBlock)promise rejecter:(RCTPromiseRejectBlock)reject {
     //Get Accengage Inbox
     [self getAccengageInboxWithSuccess:^(BMA4SInBox *inbox) {
         _inbox = inbox;
@@ -238,12 +233,7 @@ RCT_EXPORT_METHOD(
     }
 }
 
-RCT_EXPORT_METHOD(
-            resolvePromiseIfReadyWithPageIndex:(NSUInteger) pageIndex
-            limit:(NSUInteger) limit
-            messageCallback:(RCTPromiseResolveBlock) promise
-            rejecter:(RCTPromiseRejectBlock) reject
-) {
+- (void)resolvePromiseIfReadyWithPageIndex:(NSUInteger)pageIndex limit:(NSUInteger)limit messageCallback:(RCTPromiseResolveBlock)promise rejecter:(RCTPromiseRejectBlock)reject {
     if (_numLoadedMessages == 0) {
         NSUInteger startIndex = pageIndex * limit;
         NSUInteger leni = MIN(_inbox.size, startIndex + limit);
@@ -337,6 +327,11 @@ RCT_EXPORT_METHOD(
             messageCallback:(RCTPromiseResolveBlock) promise
             rejecter:(RCTPromiseRejectBlock) reject
 ) {
+    if (index < 0 || index >= _messages.count) {
+        reject(ERROR_LOADING_MESSAGE, @"Requested index is out of bounds", nil);
+        return;
+    }
+
     //See if we have a cached message for that index and return it if so
     if (_messages != nil && _messages.count >= index) {
         if (_messages[index] != nil && _contentMap != nil && _contentMap[@(index)] != nil) {
@@ -358,11 +353,6 @@ RCT_EXPORT_METHOD(
 
     if (_loadedMessages != nil) {
         reject(ERROR_ALREADY_LOADING, @"Messages are already being loaded", nil);
-        return;
-    }
-
-    if (index < 0 || index >= _inbox.size) {
-        reject(ERROR_LOADING_MESSAGE, @"Requested index is out of bounds", nil);
         return;
     }
 
@@ -407,6 +397,11 @@ RCT_EXPORT_METHOD(
 
     if (_messages == nil) {
         reject(ERROR_GENERAL, @"Messages disappeared", nil);
+        return;
+    }
+
+    if (index < 0 || index >= _messages.count) {
+        reject(ERROR_LOADING_MESSAGE, @"Requested message index is out of bounds", nil);
         return;
     }
 
@@ -464,6 +459,11 @@ RCT_EXPORT_METHOD(
         return;
     }
 
+    if (index < 0 || index >= _messages.count) {
+        reject(ERROR_LOADING_MESSAGE, @"Requested index is out of bounds", nil);
+        return;
+    }
+
     BMA4SInBoxMessage *message = _messages[index];
 
     if (message == nil) {
@@ -495,6 +495,11 @@ RCT_EXPORT_METHOD(
 
     if (_messages == nil) {
         reject(ERROR_GENERAL, @"Messages disappeared", nil);
+        return;
+    }
+
+    if (index < 0 || index >= _messages.count) {
+        reject(ERROR_LOADING_MESSAGE, @"Requested index is out of bounds", nil);
         return;
     }
 
@@ -532,6 +537,11 @@ RCT_EXPORT_METHOD(
         return;
     }
 
+    if (index < 0 || index >= _messages.count) {
+        reject(ERROR_LOADING_MESSAGE, @"Requested index is out of bounds", nil);
+        return;
+    }
+
     BMA4SInBoxMessage *message = _messages[index];
 
     if (message == nil) {
@@ -565,6 +575,11 @@ RCT_EXPORT_METHOD(
         return;
     }
 
+    if (index < 0 || index >= _messages.count) {
+        reject(ERROR_LOADING_MESSAGE, @"Requested index is out of bounds", nil);
+        return;
+    }
+
     BMA4SInBoxMessage *message = _messages[index];
 
     if (message == nil) {
@@ -591,6 +606,11 @@ RCT_EXPORT_METHOD(
 
     if (_messages == nil) {
         reject(ERROR_GENERAL, @"Messages disappeared", nil);
+        return;
+    }
+
+    if (index < 0 || index >= _messages.count) {
+        reject(ERROR_LOADING_MESSAGE, @"Requested index is out of bounds", nil);
         return;
     }
 
@@ -631,4 +651,3 @@ RCT_EXPORT_METHOD(
 }
 
 @end
-

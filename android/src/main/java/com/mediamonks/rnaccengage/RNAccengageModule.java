@@ -314,13 +314,17 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
     private void handleMessageResolver(final int index, final Promise promise) {
         Message message = _messages.get(index);
         if (message != null) {
+            final boolean hasDetails = message.getContentType() == Message.MessageContentType.Text;
+
             message.display(getReactApplicationContext(), new A4S.Callback<Message>() {
                 @Override public void onResult(Message displayedMessage) {
                     if (displayedMessage != null) {
                         _messages.put(index, displayedMessage);
                     }
-                    WritableMap messageData = transformMessageToMap(index, displayedMessage, false);
-                    promise.resolve(messageData);
+                    if (hasDetails) {
+                        WritableMap messageData = transformMessageToMap(index, displayedMessage, false);
+                        promise.resolve(messageData);
+                    }
                 }
 
                 @Override public void onError(int i, String s) {
@@ -328,7 +332,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
                 }
             });
 
-            if (message.getContentType() != Message.MessageContentType.Text) {
+            if (!hasDetails) {
                 promise.resolve(null);
             }
         } else {
