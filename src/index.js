@@ -39,6 +39,13 @@ function trackEvent(key) {
 }
 
 /**
+ * Return the Accengage ID
+ */
+function getAccengageId(callback) {
+    RNAccengageModule.getAccengageId(callback)
+}
+
+/**
  * Track a custom event to enable segmentation in Accengage.
  * The key used should be setup in Accengage dashboard before use.
  * @param key Custom key for Accengage tracking
@@ -154,6 +161,7 @@ module.exports = {
   requestPermissions,
   updateTokens,
   trackEvent,
+  getAccengageId,
   trackEventWithCustomData,
   trackLead,
   updateDeviceInfo,

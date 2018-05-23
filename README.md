@@ -1,6 +1,6 @@
 # react-native-accengage
 ReactNative module for Accengage 6.0.0+
-Version 1.2.3
+Version 1.2.4
 
 ## Installation
 
@@ -12,14 +12,14 @@ react-native link react-native-accengage
 ```
 
 ### iOS
-This module acts purely as a bridge for calling Accengage methods in ReactNative. Please follow the 
-Accengage documentation on their website, on how to setup with appId and privateKey. This will 
+This module acts purely as a bridge for calling Accengage methods in ReactNative. Please follow the
+Accengage documentation on their website, on how to setup with appId and privateKey. This will
 mean making changes to your AppDelegate.
 
 ### Android
-This module acts purely as a bridge for calling Accengage methods in ReactNative, but the gradle 
-file will link to the A4S SDK as well. Please follow the Accengage documentation on their 
-website, on how to setup with appId and privateKey. This will mean making changes to your 
+This module acts purely as a bridge for calling Accengage methods in ReactNative, but the gradle
+file will link to the A4S SDK as well. Please follow the Accengage documentation on their
+website, on how to setup with appId and privateKey. This will mean making changes to your
 Application.java.
 
 ## Usage
@@ -40,8 +40,8 @@ Accengage.hasPermissions(RNAccengageModule, result => {
 
 /**
  * Request push permissions, android will ignore this.
- * @param userAction Boolean When this is true, the settings app will be opened if the user didn't 
- *                           grant permissions. 
+ * @param userAction Boolean When this is true, the settings app will be opened if the user didn't
+ *                           grant permissions.
  */
 Accengage.requestPermissions(userAction);
 
@@ -180,8 +180,8 @@ When a message was succefully retrieved, it will have the following structure:
 }
 ```
 
-Due too the way the Accengage SDK is setup, you need to do seperate message detail calls to be 
-able to fill a list. As some of those can fail, the list can contain messages of the following 
+Due too the way the Accengage SDK is setup, you need to do seperate message detail calls to be
+able to fill a list. As some of those can fail, the list can contain messages of the following
 structure as well. In which case you can show a row with a retry button for example.
 ```
 {
@@ -191,7 +191,7 @@ structure as well. In which case you can show a row with a retry button for exam
 ```
 
 ## Error Handling
-When an inbox call fails, it will reject a promise. These are the codes you can handle: 
+When an inbox call fails, it will reject a promise. These are the codes you can handle:
 
 `loading_inbox_failed`
 When the very first call to Accengage fails
@@ -203,7 +203,7 @@ Only in case of retrieving a single message
 When you try to load a list, while a previous one was still loading
 
 `general_error`
-These are errors that shouldn't happen. Think of memory issues or async calls finishing after 
+These are errors that shouldn't happen. Think of memory issues or async calls finishing after
 cleanup.
 Examples:
 - Inbox was null
