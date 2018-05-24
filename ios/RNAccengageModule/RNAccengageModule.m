@@ -32,8 +32,8 @@ RCT_EXPORT_MODULE();
 RCT_EXPORT_METHOD(
                   getDeviceID:
                   (RCTResponseSenderBlock) callback
-                  ) {
-    NSString* accengageID = [Accengage getDeviceID];
+) {
+    NSString* accengageID = [Accengage shared].accengageId;
     callback(@[accengageID]);
 }
 
@@ -75,6 +75,7 @@ RCT_EXPORT_METHOD(
         }
     }];
 }
+
 
 #pragma mark - Tracking
 
