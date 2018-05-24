@@ -156,6 +156,7 @@ function clearMessages() {
 }
 
 module.exports = {
+  getDeviceID,
   hasPermissions,
   requestPermissions,
   updateTokens,
