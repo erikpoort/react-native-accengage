@@ -2,12 +2,6 @@ import { NativeModules } from 'react-native';
 const { RNAccengageModule } = NativeModules;
 import { _getDeviceID, _hasPermissions, _requestPermissions, _updateTokens } from './platform-specific';
 
-function getDeviceID(callback) {
-  _getDeviceID(RNAccengageModule, result => {
-    callback(result);
-  });
-}
-
 /**
  * Check if user has granted push permissions
  * @param callback Called with boolean
@@ -43,6 +37,15 @@ function updateTokens() {
 function trackEvent(key) {
   RNAccengageModule.trackEvent(key);
 }
+
+/**
+ * Return the Accengage device ID
+ */
+ function getDeviceID(callback) {
+   _getDeviceID(RNAccengageModule, result => {
+     callback(result);
+   });
+ }
 
 /**
  * Track a custom event to enable segmentation in Accengage.
