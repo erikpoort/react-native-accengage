@@ -1,3 +1,9 @@
+function _getDeviceID(Module, callback) {
+  Module.getDeviceID(result => {
+    callback(result);
+  });
+}
+
 /**
  * Check if user has granted push permissions
  * @param callback Called with boolean
@@ -30,6 +36,7 @@ function _updateTokens(Module) {
 }
 
 module.exports = {
+  _getDeviceID,
   _hasPermissions,
   _requestPermissions,
   _updateTokens,

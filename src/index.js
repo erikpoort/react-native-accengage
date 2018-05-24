@@ -1,6 +1,12 @@
 import { NativeModules } from 'react-native';
 const { RNAccengageModule } = NativeModules;
-import { _hasPermissions, _requestPermissions, _updateTokens } from './platform-specific';
+import { _getDeviceID, _hasPermissions, _requestPermissions, _updateTokens } from './platform-specific';
+
+function getDeviceID(callback) {
+  _getDeviceID(RNAccengageModule, result => {
+    callback(result);
+  });
+}
 
 /**
  * Check if user has granted push permissions
