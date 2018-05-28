@@ -1,6 +1,6 @@
 import { NativeModules } from 'react-native';
 const { RNAccengageModule } = NativeModules;
-import { _getDeviceID, _hasPermissions, _requestPermissions, _updateTokens } from './platform-specific';
+import { _hasPermissions, _requestPermissions, _updateTokens } from './platform-specific';
 
 /**
  * Check if user has granted push permissions
@@ -42,9 +42,7 @@ function trackEvent(key) {
  * Return the Accengage device ID
  */
  function getDeviceID(callback) {
-   _getDeviceID(RNAccengageModule, result => {
-     callback(result);
-   });
+   callback(RNAccengageModule.getDeviceID())
  }
 
 /**
