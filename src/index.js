@@ -42,7 +42,7 @@ function trackEvent(key) {
  * Return the Accengage device ID
  */
  function getDeviceID(callback) {
-   callback(RNAccengageModule.getDeviceID())
+   RNAccengageModule.getDeviceID(callback)
  }
 
 /**
