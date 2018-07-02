@@ -1,6 +1,7 @@
 package com.mediamonks.rnaccengage;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -41,15 +42,11 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
 
     RNAccengageModule(ReactApplicationContext reactContext) {
         super(reactContext);
+        retrieveAccengageId(new Consumer<String>() {
 
-        A4S.get(getReactApplicationContext()).getA4SId(new A4S.Callback<String>() {
             @Override
-            public void onResult(String id) {
+            public void accept(String id) {
                 accengageId = id;
-            }
-
-            @Override
-            public void onError(int i, String s) {
             }
         });
     }
@@ -65,8 +62,13 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void getDeviceID(Callback callback) {
-        callback.invoke(accengageId);
+    public void getDeviceID(final Callback callback) {
+        retrieveAccengageId(new Consumer<String>() {
+            @Override
+            public void accept(String id) {
+                callback.invoke(id);
+            }
+        });
     }
 
     @ReactMethod
@@ -158,6 +160,25 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
             // If inbox does exist, do the messages call
             _getInboxMessages(pageIndex, limit, promise);
         }
+    }
+
+    private void retrieveAccengageId(final @NonNull Consumer<String> callback) {
+        if (accengageId != null) {
+            callback.accept(accengageId);
+            return;
+        }
+        A4S.get(getReactApplicationContext()).getA4SId(new A4S.Callback<String>() {
+            @Override
+            public void onResult(String id) {
+                if (id != null) {
+                    callback.accept(id);
+                }
+            }
+
+            @Override
+            public void onError(int i, String s) {
+            }
+        });
     }
 
     private void _getInboxMessages(final int pageIndex, final int limit, final Promise promise) {
@@ -586,4 +607,8 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
             return _error;
         }
     }
+}
+
+interface Consumer<T> {
+    void accept(T t);
 }
