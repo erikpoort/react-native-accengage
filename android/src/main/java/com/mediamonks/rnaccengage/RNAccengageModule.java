@@ -1,8 +1,7 @@
 package com.mediamonks.rnaccengage;
 
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -11,6 +10,7 @@ import com.ad4screen.sdk.Inbox;
 import com.ad4screen.sdk.Message;
 import com.ad4screen.sdk.analytics.Lead;
 import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -38,8 +38,17 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
     private static final String ERROR_ALREADY_LOADING = "already_loading";
     private static final String ERROR_GENERAL = "general_error";
 
+    private String accengageId;
+
     RNAccengageModule(ReactApplicationContext reactContext) {
         super(reactContext);
+        retrieveAccengageId(new Consumer<String>() {
+
+            @Override
+            public void accept(String id) {
+                accengageId = id;
+            }
+        });
     }
 
     @Override
@@ -50,6 +59,16 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void trackEvent(int key) {
         A4S.get(getReactApplicationContext()).trackEvent(key);
+    }
+
+    @ReactMethod
+    public void getDeviceID(final Callback callback) {
+        retrieveAccengageId(new Consumer<String>() {
+            @Override
+            public void accept(String id) {
+                callback.invoke(id);
+            }
+        });
     }
 
     @ReactMethod
@@ -141,6 +160,25 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
             // If inbox does exist, do the messages call
             _getInboxMessages(pageIndex, limit, promise);
         }
+    }
+
+    private void retrieveAccengageId(final @NonNull Consumer<String> callback) {
+        if (accengageId != null) {
+            callback.accept(accengageId);
+            return;
+        }
+        A4S.get(getReactApplicationContext()).getA4SId(new A4S.Callback<String>() {
+            @Override
+            public void onResult(String id) {
+                if (id != null) {
+                    callback.accept(id);
+                }
+            }
+
+            @Override
+            public void onError(int i, String s) {
+            }
+        });
     }
 
     private void _getInboxMessages(final int pageIndex, final int limit, final Promise promise) {
@@ -569,4 +607,8 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
             return _error;
         }
     }
+}
+
+interface Consumer<T> {
+    void accept(T t);
 }

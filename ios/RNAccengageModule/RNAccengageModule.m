@@ -27,6 +27,16 @@ static NSString *const ERROR_GENERAL = @"general_error";
 
 RCT_EXPORT_MODULE();
 
+#pragma mark - Device
+
+RCT_EXPORT_METHOD(
+            getDeviceID:
+            (RCTResponseSenderBlock) callback
+) {
+    NSString* accengageID = [Accengage shared].accengageId;
+    callback(@[accengageID]);
+}
+
 #pragma mark - Permissions
 
 RCT_EXPORT_METHOD(
@@ -65,6 +75,7 @@ RCT_EXPORT_METHOD(
         }
     }];
 }
+
 
 #pragma mark - Tracking
 
