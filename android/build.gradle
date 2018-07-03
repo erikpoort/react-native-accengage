@@ -35,4 +35,5 @@ repositories {
 dependencies {
     compile 'com.facebook.react:react-native:+'
     compile 'com.ad4screen.sdk:A4SSDK:3.6.4'
+    compile('com.ad4screen.sdk:plugin-play-services-geofence:3.1.3')
 }
