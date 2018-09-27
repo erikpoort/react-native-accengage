@@ -25,9 +25,10 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mediamonks.rnaccengage.A4SInstance.getA4S;
+
 /**
- * Created by erik on 28/07/2017.
- * MediaMonks 2017
+ * Created by erik on 28/07/2017. MediaMonks 2017
  */
 
 class RNAccengageModule extends ReactContextBaseJavaModule {
@@ -57,8 +58,13 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void trackEvent(int key) {
-        A4S.get(getReactApplicationContext()).trackEvent(key);
+    public void trackEvent(final int key) {
+        getA4S(getReactApplicationContext(), new Consumer<A4S>() {
+            @Override
+            public void accept(A4S instance) {
+                instance.trackEvent(key);
+            }
+        });
     }
 
     @ReactMethod
@@ -72,7 +78,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void trackEventWithCustomData(int key, ReadableMap customData) {
+    public void trackEventWithCustomData(final int key, ReadableMap customData) {
         if (customData == null) {
             this.trackEvent(key);
             return;
@@ -85,9 +91,14 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
 
         ReadableNativeMap nativeMap = (ReadableNativeMap) customData;
         HashMap hashMap = nativeMap.toHashMap();
-        JSONObject jsonObject = new JSONObject(hashMap);
+        final JSONObject jsonObject = new JSONObject(hashMap);
 
-        A4S.get(getReactApplicationContext()).trackEvent(key, jsonObject.toString());
+        getA4S(getReactApplicationContext(), new Consumer<A4S>() {
+            @Override
+            public void accept(A4S instance) {
+                instance.trackEvent(key, jsonObject.toString());
+            }
+        });
     }
 
     @ReactMethod
@@ -101,8 +112,13 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
             return;
         }
 
-        Lead lead = new Lead(leadLabel, leadValue);
-        A4S.get(getReactApplicationContext()).trackLead(lead);
+        final Lead lead = new Lead(leadLabel, leadValue);
+        getA4S(getReactApplicationContext(), new Consumer<A4S>() {
+            @Override
+            public void accept(A4S instance) {
+                instance.trackLead(lead);
+            }
+        });
     }
 
     @ReactMethod
@@ -119,7 +135,7 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         ReadableNativeMap nativeMap = (ReadableNativeMap) object;
         HashMap<String, Object> hashMap = nativeMap.toHashMap();
 
-        Bundle bundle = new Bundle();
+        final Bundle bundle = new Bundle();
         for (String key : hashMap.keySet()) {
             Object value = hashMap.get(key);
             if (value instanceof String) {
@@ -129,7 +145,12 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
             }
         }
 
-        A4S.get(getReactApplicationContext()).updateDeviceInfo(bundle);
+        getA4S(getReactApplicationContext(), new Consumer<A4S>() {
+            @Override
+            public void accept(A4S instance) {
+                instance.updateDeviceInfo(bundle);
+            }
+        });
     }
 
     private Inbox _inbox;
@@ -146,14 +167,22 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
     public void getInboxMessagesPaginated(final int pageIndex, final int limit, final Promise promise) {
         if (_inbox == null) {
             // If inbox doesn't exist, create a new one
-            A4S.get(getReactApplicationContext()).getInbox(new A4S.Callback<Inbox>() {
-                @Override public void onResult(Inbox inbox) {
-                    _inbox = inbox;
-                    _getInboxMessages(pageIndex, limit, promise);
-                }
+            A4SInstance.getA4S(getReactApplicationContext(), new Consumer<A4S>() {
 
-                @Override public void onError(int i, String s) {
-                    promise.reject(ERROR_LOADING_INBOX, s);
+                @Override
+                public void accept(A4S instance) {
+                    instance.getInbox(new A4S.Callback<Inbox>() {
+                        @Override
+                        public void onResult(Inbox inbox) {
+                            _inbox = inbox;
+                            _getInboxMessages(pageIndex, limit, promise);
+                        }
+
+                        @Override
+                        public void onError(int i, String s) {
+                            promise.reject(ERROR_LOADING_INBOX, s);
+                        }
+                    });
                 }
             });
         } else {
@@ -167,16 +196,23 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
             callback.accept(accengageId);
             return;
         }
-        A4S.get(getReactApplicationContext()).getA4SId(new A4S.Callback<String>() {
-            @Override
-            public void onResult(String id) {
-                if (id != null) {
-                    callback.accept(id);
-                }
-            }
+
+        A4SInstance.getA4S(getReactApplicationContext(), new Consumer<A4S>() {
 
             @Override
-            public void onError(int i, String s) {
+            public void accept(A4S instance) {
+                A4S.get(getReactApplicationContext()).getA4SId(new A4S.Callback<String>() {
+                    @Override
+                    public void onResult(String id) {
+                        if (id != null) {
+                            callback.accept(id);
+                        }
+                    }
+
+                    @Override
+                    public void onError(int i, String s) {
+                    }
+                });
             }
         });
     }
@@ -215,9 +251,11 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
             }
 
             _inbox.getMessage(currentIndex, new A4S.MessageCallback() {
-                @Override public void onResult(Message message, int loadedMessageIndex) {
+                @Override
+                public void onResult(Message message, int loadedMessageIndex) {
                     if (_inbox == null) {
-                        // clearMessages was called and thus these calls are canceled and can be ignored.
+                        // clearMessages was called and thus these calls are canceled and can be
+                        // ignored.
                         return;
                     }
 
@@ -227,9 +265,11 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
                     resolvePromiseIfReady(pageIndex, limit, promise);
                 }
 
-                @Override public void onError(int failedMessageIndex, String s) {
+                @Override
+                public void onError(int failedMessageIndex, String s) {
                     if (_inbox == null) {
-                        // clearMessages was called and thus these calls are canceled and can be ignored.
+                        // clearMessages was called and thus these calls are canceled and can be
+                        // ignored.
                         return;
                     }
 
@@ -317,14 +357,14 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
 
         String contentType = null;
         switch (message.getContentType()) {
-            case Text:
-                contentType = "text";
-                break;
-            case Web:
-                contentType = "web";
-                break;
-            default:
-                break;
+        case Text:
+            contentType = "text";
+            break;
+        case Web:
+            contentType = "web";
+            break;
+        default:
+            break;
         }
 
         if (contentType != null) {
@@ -355,7 +395,8 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
             final boolean hasDetails = message.getContentType() == Message.MessageContentType.Text;
 
             message.display(getReactApplicationContext(), new A4S.Callback<Message>() {
-                @Override public void onResult(Message displayedMessage) {
+                @Override
+                public void onResult(Message displayedMessage) {
                     if (displayedMessage != null) {
                         _messages.put(index, displayedMessage);
                     }
@@ -365,7 +406,8 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
                     }
                 }
 
-                @Override public void onError(int i, String s) {
+                @Override
+                public void onError(int i, String s) {
                     promise.reject(ERROR_GENERAL, s);
                 }
             });
@@ -406,11 +448,13 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
 
         // If the message was lost or never loaded, re-load it.
         _inbox.getMessage(index, new A4S.MessageCallback() {
-            @Override public void onResult(Message message, int loadedMessageIndex) {
+            @Override
+            public void onResult(Message message, int loadedMessageIndex) {
                 handleMessageResolver(loadedMessageIndex, promise);
             }
 
-            @Override public void onError(int failedMessageIndex, String s) {
+            @Override
+            public void onError(int failedMessageIndex, String s) {
                 promise.reject(ERROR_LOADING_MESSAGE, s);
             }
         });
@@ -472,7 +516,12 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         }
 
         message.setRead(read);
-        A4S.get(getReactApplicationContext()).updateMessages(_inbox);
+        getA4S(getReactApplicationContext(), new Consumer<A4S>() {
+            @Override
+            public void accept(A4S instance) {
+                instance.updateMessages(_inbox);
+            }
+        });
 
         promise.resolve(transformMessageToMap(index, message, false));
     }
@@ -496,7 +545,12 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         }
 
         message.setDisplayed(diplayed);
-        A4S.get(getReactApplicationContext()).updateMessages(_inbox);
+        getA4S(getReactApplicationContext(), new Consumer<A4S>() {
+            @Override
+            public void accept(A4S instance) {
+                instance.updateMessages(_inbox);
+            }
+        });
 
         promise.resolve(transformMessageToMap(index, message, false));
     }
@@ -520,7 +574,12 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
         }
 
         message.setArchived(archived);
-        A4S.get(getReactApplicationContext()).updateMessages(_inbox);
+        getA4S(getReactApplicationContext(), new Consumer<A4S>() {
+            @Override
+            public void accept(A4S instance) {
+                instance.updateMessages(_inbox);
+            }
+        });
 
         promise.resolve(transformMessageToMap(index, message, false));
     }
@@ -607,8 +666,4 @@ class RNAccengageModule extends ReactContextBaseJavaModule {
             return _error;
         }
     }
-}
-
-interface Consumer<T> {
-    void accept(T t);
 }
