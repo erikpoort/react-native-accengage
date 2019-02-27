@@ -66,7 +66,7 @@ RCT_EXPORT_METHOD(
         if (userAction && !hasPermissions && [[NSUserDefaults standardUserDefaults] boolForKey:kPushRequested]) {
             // There's no permissions, the user was asked before and this call is triggered by user action
             NSURL *url = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
-            [[UIApplication sharedApplication] openURL:url];
+            [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
         } else if (request || hasPermissions) {
             // There's permissions so we are updating, or we are requesting for the first time
             [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kPushRequested];
@@ -389,7 +389,7 @@ RCT_EXPORT_METHOD(
                 }
             });
         }                    onError:^(NSUInteger requestedIndex) {
-            NSString *errorMessage = [NSString stringWithFormat:@"Error loading message with index %i", requestedIndex];
+            NSString *errorMessage = [NSString stringWithFormat:@"Error loading message with index %lu", (unsigned long)requestedIndex];
             reject(ERROR_LOADING_MESSAGE, errorMessage, nil);
         }];
     });

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		035FC98D2227200400EC86A4 /* Accengage.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 035FC98C22271FED00EC86A4 /* Accengage.framework */; };
 		2FA286D829AAF3D99D291B23 /* RNAccengageModule.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 2FA2864B826924452CA186D5 /* RNAccengageModule.h */; };
 		2FA287CCA6B527EF0F4AD3C0 /* RNAccengageModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 2FA283B5C85892C044816F6D /* RNAccengageModule.m */; };
 /* End PBXBuildFile section */
@@ -25,6 +26,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		035FC98C22271FED00EC86A4 /* Accengage.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Accengage.framework; sourceTree = "<group>"; };
 		2FA283B5C85892C044816F6D /* RNAccengageModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RNAccengageModule.m; sourceTree = "<group>"; };
 		2FA2864B826924452CA186D5 /* RNAccengageModule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RNAccengageModule.h; sourceTree = "<group>"; };
 		2FA28B0AFA2D1262EF148E63 /* libRNAccengageModule.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libRNAccengageModule.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -35,17 +37,27 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				035FC98D2227200400EC86A4 /* Accengage.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		035FC98B22271FED00EC86A4 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				035FC98C22271FED00EC86A4 /* Accengage.framework */,
+			);
+			path = Frameworks;
+			sourceTree = "<group>";
+		};
 		2FA2831CA4E414FFA447F530 = {
 			isa = PBXGroup;
 			children = (
 				2FA286DD12F52D7EF1E77141 /* Products */,
 				2FA28899B646966C0F0A8919 /* RNAccengageModule */,
+				035FC98B22271FED00EC86A4 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -164,17 +176,22 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = "$(SRCROOT)/../../../ios/Pods/Headers/**";
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/../../../ios/**";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				VALID_ARCHS = "arm64 arm64e armv7 armv7s x86_64 i386";
 			};
 			name = Debug;
 		};
 		2FA280AF117ECD25DD36E3E5 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Frameworks",
+				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -216,17 +233,22 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = "$(SRCROOT)/../../../ios/Pods/Headers/**";
+				HEADER_SEARCH_PATHS = "$(SRCROOT)/../../../ios/**";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
+				VALID_ARCHS = "arm64 arm64e armv7 armv7s x86_64 i386";
 			};
 			name = Release;
 		};
 		2FA28844D736628803766601 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Frameworks",
+				);
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
