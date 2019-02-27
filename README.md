@@ -1,6 +1,6 @@
 # react-native-accengage
-ReactNative module for Accengage 6.0.0+
-Version 1.3.0
+ReactNative module for Accengage
+Version 1.4.0
 
 ## Installation
 
